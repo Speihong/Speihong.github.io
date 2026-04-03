@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>转正汇报 - 职行力</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5FC194',
+                        secondary: '#4AAE82',
+                        dark: '#1F2937',
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <style>
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transform: scale(0.98) translateX(50px);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .slide.active {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+            pointer-events: auto;
+            z-index: 10;
+        }
+        .slide.prev {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        .slide-content {
+            width: 90%;
+            max-width: 1200px;
+            height: 70%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 悬停动画效果 */
+        .hover-scale {
+            transition: all 0.3s ease;
+        }
+        .hover-scale:hover {
+            transform: scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        /* 卡片悬停效果 */
+        .card-hover {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(95, 193, 148, 0.2);
+        }
+        
+        /* 按钮悬停效果 */
+        .btn-hover {
+            transition: all 0.3s ease;
+        }
+        .btn-hover:hover {
+            transform: scale(1.05);
+            background-color: #5FC194;
+            color: white;
+        }
+        
+        /* 点击反馈效果 */
+        .click-feedback {
+            transition: all 0.15s ease;
+        }
+        .click-feedback:active {
+            transform: scale(0.95);
+        }
+        
+        /* 渐变背景悬停 */
+        .gradient-hover {
+            transition: all 0.3s ease;
+        }
+        .gradient-hover:hover {
+            filter: brightness(1.05);
+        }
+        
+        /* 列表项悬停效果 */
+        .list-item-hover {
+            transition: all 0.2s ease;
+        }
+        .list-item-hover:hover {
+            transform: translateX(5px);
+            background-color: rgba(95, 193, 148, 0.1);
+        }
+        
+        /* 标签悬停效果 */
+        .tag-hover {
+            transition: all 0.3s ease;
+        }
+        .tag-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* 元素进入动画 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-fade-in-up {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+        
+        /* 交错动画延迟 */
+        .delay-100 { animation-delay: 0.1s; }
+        .delay-200 { animation-delay: 0.2s; }
+        .delay-300 { animation-delay: 0.3s; }
+        .delay-400 { animation-delay: 0.4s; }
+        .delay-500 { animation-delay: 0.5s; }
+        
+        /* 步骤卡片悬停 */
+        .step-card {
+            transition: all 0.3s ease;
+        }
+        .step-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(95, 193, 148, 0.25);
+        }
+        
+        /* SWOT卡片悬停 */
+        .swot-card {
+            transition: all 0.3s ease;
+        }
+        .swot-card:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="bg-white overflow-hidden text-gray-800">
+    
+    <!-- 礼花效果容器 -->
+    <div id="confetti-container" class="fixed inset-0 pointer-events-none z-[100] hidden"></div>
+
+    <!-- 顶部 Logo -->
+    <div class="fixed top-4 left-10 z-50 flex items-center gap-4">
+        <div class="flex items-center gap-3">
+            <img src="images/image2.png" alt="logo" class="w-20 h-20 object-contain">
+        </div>
+    </div>
+
+    <!-- 控制栏 -->
+    <div class="fixed top-8 right-10 z-50 flex items-center gap-4">
+        <button id="fullscreen-toggle" class="p-2 text-gray-400 hover:text-primary rounded-full hover:bg-gray-100 transition-colors" title="全屏">
+            <i data-lucide="maximize" class="w-6 h-6"></i>
+        </button>
+        <div class="text-gray-400 text-sm font-mono bg-gray-100 px-3 py-1 rounded-full">
+            <span id="current-slide">1</span> / <span id="total-slides">9</span>
+        </div>
+    </div>
+
+    <!-- 幻灯片容器 -->
+    <div id="slide-container">
+        
+        <!-- 背景水印 -->
+        <svg class="bg-watermark bg-watermark-top-right" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+             <circle cx="50" cy="50" r="48" stroke="currentColor" stroke-width="1"/>
+             <path d="M20 50H45M20 35H45M20 65H45" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+             <path d="M55 35L70 65M70 35L55 65" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+             <path d="M80 50H105M80 35H105M80 65H105" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+        <svg class="bg-watermark bg-watermark-bottom-left" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="48" stroke="currentColor" stroke-width="1"/>
+             <path d="M20 50H45M20 35H45M20 65H45" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+             <path d="M55 35L70 65M70 35L55 65" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+             <path d="M80 50H105M80 35H105M80 65H105" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+
+        <!-- 第1页: 封面 -->
+        <div class="slide active" data-index="1" style="background-image: url('images/image1.png'); background-size: cover; background-position: center;">
+            <div class="max-w-5xl w-full text-center space-y-10 animate-fade-in-up">
+                <div class="mb-16 pt-8">
+                    <h2 class="text-2xl text-primary font-bold tracking-[0.2em] uppercase mb-8">转正汇报</h2>
+                    <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-primary to-gray-900 mb-6 leading-tight tracking-tight">从功能交付到价值创造</h1>
+                    <div class="w-24 h-1.5 bg-primary mx-auto rounded-full"></div>
+                </div>
+                
+                <div class="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-primary/10 to-purple-50 rounded-full border border-primary/20">
+                    <i data-lucide="sparkles" class="w-5 h-5 text-primary"></i>
+                    <span class="text-lg font-medium text-gray-700">夯实标准产品核心 · 以二开推动优化 · 通过AI创造增量</span>
+                    <i data-lucide="sparkles" class="w-5 h-5 text-purple-400"></i>
+                </div>
+                
+                <div class="grid grid-cols-4 gap-8 max-w-4xl mx-auto text-left pt-8 border-t border-gray-100">
+                    <div class="text-center">
+                        <p class="text-gray-400 text-sm mb-1">汇报人</p>
+                        <p class="text-xl font-bold text-gray-800">施培鸿</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-400 text-sm mb-1">部门</p>
+                        <p class="text-xl font-bold text-gray-800">产品规划部</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-400 text-sm mb-1">岗位</p>
+                        <p class="text-xl font-bold text-gray-800">产品经理</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-400 text-sm mb-1">入职时间</p>
+                        <p class="text-xl font-bold text-gray-800">2026.01.04</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第2页: 开篇定调 -->
+        <div class="slide" data-index="2" style="background-image: url('images/image1.png'); background-size: cover; background-position: center;">
+            <div class="slide-content">
+                <h2 class="slide-title">
+                    <span class="text-primary mr-4">01</span>试用期工作全景
+                </h2>
+                
+                <div class="grid grid-cols-2 gap-10 h-full items-center -mt-8">
+                    <!-- 三层阶梯模型 -->
+                    <div class="flex flex-col justify-center space-y-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6">三层阶梯模型</h3>
+                        <div class="relative">
+                            <!-- 底层 -->
+                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-5 rounded-xl text-white shadow-lg transform hover:scale-105 transition-transform cursor-pointer gradient-hover">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl font-bold">1</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-lg">标准化 — 夯实核心</h4>
+                                        <p class="text-sm text-blue-100">降低边际成本，提升产品通用性</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-blue-600"></div>
+                            
+                            <!-- 中层 -->
+                            <div class="bg-gradient-to-r from-green-500 to-green-600 p-5 rounded-xl text-white shadow-lg mt-6 transform hover:scale-105 transition-transform cursor-pointer ml-8 gradient-hover">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl font-bold">2</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-lg">定制化 — 价值反哺</h4>
+                                        <p class="text-sm text-green-100">洞察行业需求，推动产品优化</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-[72px] left-[calc(50%+2rem)] transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-green-600"></div>
+                            
+                            <!-- 顶层 -->
+                            <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-5 rounded-xl text-white shadow-lg mt-6 transform hover:scale-105 transition-transform cursor-pointer ml-16 gradient-hover">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                                        <span class="text-2xl font-bold">3</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-lg">AI化 — 突破增量</h4>
+                                        <p class="text-sm text-purple-100">打造差异化壁垒，业务增长第二曲线</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 核心叙事 -->
+                    <div class="card-light p-8 rounded-xl mt-8 card-hover">
+                        <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <i data-lucide="message-square" class="text-primary"></i> 试用期工作内容
+                        </h3>
+                        <p class="text-gray-600 leading-relaxed mb-6">
+                            我已全面承接<strong class="text-primary">执掌功能迭代需求</strong>、<strong class="text-primary">二开需求</strong>、<strong class="text-primary">AI课程智能体设计</strong>三大工作，完成试用期既定目标。
+                        </p>
+                        <div class="space-y-4" id="iteration-items">
+                            <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg relative cursor-pointer hover:bg-blue-100 transition-colors" onmouseenter="showTooltip(this)" onmouseleave="hideTooltip(this)">
+                                <i data-lucide="layers" class="text-blue-500 w-5 h-5"></i>
+                                <span class="text-gray-700">承接 <strong class="text-blue-600">51</strong> 个迭代需求</span>
+                                <!-- 气泡弹窗 -->
+                                <div class="tooltip-content absolute left-0 top-full mt-2 opacity-0 pointer-events-none transition-opacity duration-300 z-50">
+                                    <img src="images/4.png" alt="4.png" class="w-[500px] rounded-lg shadow-2xl border-2 border-primary">
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                                <i data-lucide="package" class="text-green-500 w-5 h-5"></i>
+                                <span class="text-gray-700">交付 <strong class="text-green-600">3</strong> 个二开需求</span>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                                <i data-lucide="bot" class="text-purple-500 w-5 h-5"></i>
+                                <span class="text-gray-700">AI课程智能体（设计中）</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 底部总结语 -->
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-6xl text-center">
+                    <p class="text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-md border border-primary/20">
+                        <span class="block mb-1"></span>我始终围绕SaaS产品的本质开展工作</span>
+                        <span class="block text-base">以功能迭代夯实标准产品核心（降低边际成本），以二开交付推动产品优化（洞察行业需求），以智能体设计打造创新增长壁垒（打造第二曲线）。</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第3页: 夯实核心 -->
+        <div class="slide" data-index="3" style="background-image: url('images/image1.png'); background-size: cover; background-position: center;">
+            <div class="slide-content">
+                <h2 class="slide-title">
+                    <span class="text-primary mr-4">02</span>夯实核心——标准化能力的广度与深度
+                </h2>
+                
+                <div class="grid grid-cols-3 gap-8 mt-6 h-full">
+                    <!-- 核心观点 -->
+                    <div class="col-span-1 card-light p-6 rounded-xl flex flex-col card-hover">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600">
+                            <i data-lucide="lightbulb" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">核心思考</h3>
+                        <div class="bg-gradient-to-r from-blue-50 to-green-50 p-4 rounded-lg border-l-4 border-primary">
+                            <p class="text-gray-700 leading-relaxed">
+                                <strong>SaaS的毛利来自于标准化。</strong><br>
+                                标准功能的每一次优化，都是在提高边际成本。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- 版本交付 -->
+                    <div class="col-span-2 card-light p-6 rounded-xl flex flex-col card-hover">
+                        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <i data-lucide="package" class="text-primary"></i> 版本交付
+                        </h3>
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div class="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+                                <div class="text-3xl font-bold text-blue-600 mb-1">3.80</div>
+                                <div class="text-xs text-gray-500">版本迭代</div>
+                            </div>
+                            <div class="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+                                <div class="text-3xl font-bold text-green-600 mb-1">3.81</div>
+                                <div class="text-xs text-gray-500">版本迭代</div>
+                            </div>
+                            <div class="text-center p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl">
+                                <div class="text-3xl font-bold text-purple-600 mb-1">3.82</div>
+                                <div class="text-xs text-gray-500">版本迭代</div>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 mb-3">工作流程</h4>
+                            <ul class="space-y-2 text-sm text-gray-600">
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="star" class="w-4 h-4 text-green-500 mt-0.5"></i>
+                                    <span>需求分析，确保需求必要性</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="star" class="w-4 h-4 text-green-500 mt-0.5"></i>
+                                    <span>原型设计，确保交互体验一致性</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="star" class="w-4 h-4 text-green-500 mt-0.5"></i>
+                                    <span>输出PRD文档，确保需求清晰可执行</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="star" class="w-4 h-4 text-green-500 mt-0.5"></i>
+                                    <span>方案评估，确保需求合理且可行</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="star" class="w-4 h-4 text-green-500 mt-0.5"></i>
+                                    <span>需求传达，确保开发理解且无歧义</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <i data-lucide="star" class="w-4 h-4 text-green-500 mt-0.5"></i>
+                                    <span>测试验收，确保功能交付质量</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 底部总结语 -->
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-6xl text-center">
+                    <p class="text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-md border border-primary/20">
+                        "我认为不仅仅是在简单的加功能，而是在通过优化产品的标准功能，提升全租户的续费意愿。"
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第4页: 第二层价值 -->
+        <div class="slide" data-index="4" style="background-image: url('images/image1.png'); background-size: cover; background-position: center;">
+            <div class="slide-content">
+                <h2 class="slide-title">
+                    <span class="text-primary mr-4">03</span>价值反哺——二开驱动产品优化
+                </h2>
+                
+                <div class="grid grid-cols-2 gap-8 mt-6 h-full">
+                    <!-- 核心观点 -->
+                    <div class="card-light p-6 rounded-xl flex flex-col card-hover">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4 text-green-600">
+                            <i data-lucide="eye" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">核心思考</h3>
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-l-4 border-green-500">
+                            <p class="text-gray-700 leading-relaxed">
+                                <strong>二开不是"被动妥协"，而是对市场真实需求的调研。</strong><br>
+                                通过二开解决"生存问题"，通过抽象解决"共性问题"。
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- 租户列表 -->
+                    <div class="card-light p-6 rounded-xl flex flex-col card-hover">
+                        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <i data-lucide="building-2" class="text-green-600"></i> 负责租户二开需求
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4 flex-1">
+                            <div class="p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl">
+                                <div class="font-bold text-orange-700 mb-1">奥乐齐</div>
+                                <p class="text-xs text-gray-600">零售行业定制需求</p>
+                            </div>
+                            <div class="p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
+                                <div class="font-bold text-blue-700 mb-1">顾家</div>
+                                <p class="text-xs text-gray-600">家居行业定制需求</p>
+                            </div>
+                            <div class="p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
+                                <div class="font-bold text-purple-700 mb-1">Zara</div>
+                                <p class="text-xs text-gray-600">服装行业定制需求</p>
+                            </div>
+                            <div class="p-4 bg-gradient-to-r from-pink-50 to-pink-100 rounded-xl">
+                                <div class="font-bold text-pink-700 mb-1">玛氏箭牌</div>
+                                <p class="text-xs text-gray-600">快消行业定制需求</p>
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-gray-100">
+                            <h4 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <i data-lucide="arrow-up-right" class="w-4 h-4 text-primary"></i> 由点到面
+                            </h4>
+                            <p class="text-sm text-gray-600">
+                                将共性度高的需求<strong class="text-primary">抽象成标准化功能</strong>，减少未来同类需求的迭代成本，实现"定制需求产品化"。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 底部总结语 -->
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-6xl text-center">
+                    <p class="text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-md border border-green-500/20">
+                        "二开是商业收入的来源，更是洞察行业痛点的窗口。我通过'定制需求产品化'，让非标需求反哺标准产品。"
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第5页: 第三层价值 -->
+        <div class="slide" data-index="5" style="background-image: url('images/image1.png'); background-size: cover; background-position: center;">
+            <div class="slide-content">
+                <h2 class="slide-title">
+                    <span class="text-primary mr-4">04</span>突破增量——AI智能体打造差异化
+                </h2>
+                
+                <div class="grid grid-cols-3 gap-8 mt-6 h-full">
+                    <!-- 核心观点 -->
+                    <div class="col-span-1 card-light p-6 rounded-xl flex flex-col card-hover">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4 text-purple-600">
+                            <i data-lucide="brain" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">核心思考</h3>
+                        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg border-l-4 border-purple-500">
+                            <p class="text-gray-700 leading-relaxed">
+                                在同质化严重的L&D市场，AI Agent是将产品从<strong>"数字化工具"</strong>进化为<strong>"业务伙伴"</strong>的路径之一。
+                            </p>
+                        </div>
+                        <div class="mt-auto pt-4">
+                            <p class="text-sm text-gray-500 italic">
+                                打造差异化竞争优势，使平台从单纯的"线上存课容器"升级为"AI智慧学习平台"，为2026年职行力业务增长打下基础
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- 场景洞察 -->
+                    <div class="col-span-2 flex flex-col gap-6">
+                        <div class="card-light p-6 rounded-xl">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <i data-lucide="search" class="text-orange-500"></i> 场景洞察
+                            </h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-4 bg-orange-50 rounded-lg">
+                                    <h4 class="font-bold text-gray-800 mb-2">痛点1：找课难</h4>
+                                    <p class="text-sm text-gray-600">学员找课难度高<br>管理员完课率低</p>
+                                </div>
+                                <div class="p-4 bg-blue-50 rounded-lg card-hover">
+                                    <h4 class="font-bold text-gray-800 mb-2">痛点2：制作难</h4>
+                                    <p class="text-sm text-gray-600">企业内训中课件制作难<br>员工互动少</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-light p-6 rounded-xl flex-1 relative" onmouseenter="showTooltip(this)" onmouseleave="hideTooltip(this)">
+                            <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <i data-lucide="sparkles" class="text-purple-500"></i> 成果展示：AI课程智能体
+                            </h3>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                                    <i data-lucide="message-circle" class="w-8 h-8 text-purple-600 mx-auto mb-2"></i>
+                                    <div class="font-bold text-gray-800">对话式找课</div>
+                                    <p class="text-xs text-gray-500 mt-1">智能对话精准匹配</p>
+                                </div>
+                                <div class="text-center p-4 bg-purple-50 rounded-lg">
+                                    <i data-lucide="sparkles" class="w-8 h-8 text-purple-600 mx-auto mb-2"></i>
+                                    <div class="font-bold text-gray-800">个性化推送</div>
+                                    <p class="text-xs text-gray-500 mt-1">基于历史数据推荐</p>
+                                </div>
+                                <div class="text-center p-4 bg-gray-50 rounded-lg opacity-60">
+                                    <i data-lucide="video" class="w-8 h-8 text-gray-400 mx-auto mb-2"></i>
+                                    <div class="font-bold text-gray-400">AI制课/AI互动式问答</div>
+                                    <p class="text-xs text-gray-400 mt-1">前瞻功能规划中</p>
+                                </div>
+                            </div>
+                            <!-- 气泡弹窗 -->
+                            <div class="tooltip-content fixed left-0 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-300 z-50 p-4 bg-white rounded-lg shadow-2xl border-2 border-purple-500" style="width: 90vw; max-width: 1200px; height: 80vh; display: flex; align-items: center; justify-content: center;">
+                                <button onclick="hideTooltip(this.parentElement)" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+                                <div class="flex gap-8 h-full w-full items-center justify-center">
+                                    <img src="images/5.png" alt="5" class="max-w-[45%] max-h-full object-contain rounded-lg">
+                                    <img src="images/6.png" alt="6" class="max-w-[45%] max-h-full object-contain rounded-lg">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 底部总结语 -->
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-6xl text-center">
+                    <p class="text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-md border border-purple-500/20">
+                        智能体是我们产品的第二增长曲线。它解决的不是'有没有'的问题，而是'如何让知识真正流转起来'。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第6页: 能力成长 -->
+        <div class="slide" data-index="6" style="background-image: url('images/image1.png'); background-size: cover; background-position: center;">
+            <div class="slide-content">
+                <h2 class="slide-title">
+                    <span class="text-primary mr-4">05</span>能力成长与价值认知升级
+                </h2>
+                
+                <div class="grid grid-cols-2 gap-8 mt-6 h-full">
+                    <!-- 认知对比 -->
+                    <div class="card-light p-6 rounded-xl">
+                        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <i data-lucide="git-compare" class="text-primary"></i> 认知对比
+                        </h3>
+                        
+                        <div class="space-y-6">
+                            <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-gray-400">
+                                <h4 class="font-bold text-gray-700 mb-2">过去（执行视角）</h4>
+                                <ul class="text-sm text-gray-600 space-y-1">
+                                    <li class="bg-gray-100 px-2 py-1 rounded">• 关注需求交付</li>
+                                    <li class="bg-gray-100 px-2 py-1 rounded">• 关注Jira工单状态</li>
+                                    <li class="bg-gray-100 px-2 py-1 rounded font-medium">• 认为交付即终点</li>
+                                </ul>
+                            </div>
+                            <div class="text-center">
+                                <i data-lucide="arrow-down" class="w-6 h-6 text-gray-300 mx-auto"></i>
+                            </div>
+                            <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                                <h4 class="font-bold text-green-700 mb-2">现在（价值视角）</h4>
+                                <ul class="text-sm text-gray-600 space-y-1">
+                                    <li class="bg-green-100 px-2 py-1 rounded">• 关注PMF（产品市场匹配度）</li>
+                                    <li class="bg-green-100 px-2 py-1 rounded">• 关注需求的价值与成本平衡</li>
+                                    <li class="bg-green-100 px-2 py-1 rounded font-bold text-green-700">• 关注商业转化与租户增长</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 认知结晶 -->
+                    <div class="card-light p-6 rounded-xl flex flex-col card-hover">
+                        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <i data-lucide="gem" class="text-purple-500"></i> 认知结晶
+                        </h3>
+                        
+                        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg mb-6">
+                            <p class="text-lg font-bold text-purple-700 text-center">
+                                "SaaS PM的本质是在"标准化的效率"与"个性化的价值"之间，寻找平衡点"
+                            </p>
+                        </div>
+                        
+                        <div class="space-y-8 flex-1">
+                            <div class="p-4 bg-blue-50 rounded-lg">
+                                <h4 class="font-bold text-blue-700 mb-2 flex items-center gap-2">
+                                    <i data-lucide="zap" class="w-4 h-4"></i> 标准化的效率
+                                </h4>
+                                <p class="text-sm text-gray-600">
+                                    思考如何通过一套通用逻辑解决80%的共性问题，让产品跑得快、卖得广（降低边际成本）。
+                                </p>
+                            </div>
+                            <div class="p-4 bg-green-50 rounded-lg">
+                                <h4 class="font-bold text-green-700 mb-2 flex items-center gap-2">
+                                    <i data-lucide="heart" class="w-4 h-4"></i> 个性化的价值
+                                </h4>
+                                <p class="text-sm text-gray-600">
+                                    思考如何通过灵活的配置与二开解决20%的核心痛点，让大客户离不开、愿续费（提升商业壁垒）。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 底部总结语 -->
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 w-full max-w-6xl text-center">
+                    <p class="text-lg font-medium text-gray-700 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-md border border-primary/20">
+                        我的平衡术：把客户的"定制诉求"转化为产品的"模块化能力"，让今天的二开变成明天的卖点。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第7页: 不足与改进 -->
+        <div class="slide" data-index="7" style="background-image: url('images/image1.png'); background-size: cover; background-position: center;">
+            <div class="slide-content">
+                <h2 class="slide-title">
+                    <span class="text-primary mr-4">06</span>不足与改进计划
+                </h2>
+                
+                <div class="mt-6 h-full">
+                    <div class="card-light p-8 rounded-xl h-full">
+                        <h3 class="text-xl font-bold text-gray-900 mb-8 text-center">SWOT 自我剖析</h3>
+                        
+                        <div class="grid grid-cols-2 gap-6">
+                            <!-- 优势 -->
+                            <div class="p-5 bg-green-50 rounded-xl border border-green-200 swot-card relative cursor-pointer" onmouseenter="showTooltip(this)" onmouseleave="hideTooltip(this)">
+                                <h4 class="font-bold text-green-700 mb-4 flex items-center gap-2">
+                                    <i data-lucide="thumbs-up" class="w-5 h-5"></i> 优势 (Strengths)
+                                </h4>
+                                <ul class="text-sm text-gray-700 space-y-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-green-500 mt-0.5">✓</span>
+                                        <span>全链路交付力：具备从迭代需求到二开需求，再到AI功能创新设计的能力</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-green-500 mt-0.5">✓</span>
+                                        <span>会与业务线确认方案技术可行性，与顾问确认方案是否满足</span>
+                                    </li>
+                                </ul>
+                                <!-- 气泡弹窗 -->
+                                <div class="tooltip-content fixed left-0 top-1/2 -translate-y-1/2 opacity-0 pointer-events-none transition-opacity duration-300 z-50 p-4 bg-white rounded-lg shadow-2xl border-2 border-primary" style="width: 90vw; max-width: 1200px; height: 80vh; display: flex; align-items: center; justify-content: center;">
+                                    <button onclick="hideTooltip(this.parentElement)" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+                                    <div class="flex gap-4 h-full w-full">
+                                        <div class="flex-1 flex items-center justify-center">
+                                            <img src="images/1.png" alt="1" class="max-w-full max-h-full object-contain rounded-lg">
+                                        </div>
+                                        <div class="flex-1 flex flex-col gap-4 items-center justify-center">
+                                            <img src="images/2.png" alt="2" class="max-w-full max-h-1/2 object-contain rounded-lg">
+                                            <img src="images/3.png" alt="3" class="max-w-full max-h-1/2 object-contain rounded-lg">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 劣势 -->
+                            <div class="p-5 bg-orange-50 rounded-xl border border-orange-200 swot-card">
+                                <h4 class="font-bold text-orange-700 mb-4 flex items-center gap-2">
+                                    <i data-lucide="alert-circle" class="w-5 h-5"></i> 劣势 (Weaknesses)
+                                </h4>
+                                <ul class="text-sm text-gray-700 space-y-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-orange-500 mt-0.5">!</span>
+                                        <span>对非执掌功能的业务逻辑理解仍有欠缺，面对跨业务功能的需求仍需请教了解。对V3、V4的差异还有加强学习的空间。</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <!-- 机会 -->
+                            <div class="p-5 bg-blue-50 rounded-xl border border-blue-200 swot-card">
+                                <h4 class="font-bold text-blue-700 mb-4 flex items-center gap-2">
+                                    <i data-lucide="trending-up" class="w-5 h-5"></i> 机会 (Opportunities)
+                                </h4>
+                                <ul class="text-sm text-gray-700 space-y-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-blue-500 mt-0.5">★</span>
+                                        <span>26年产品计划的门店优化，有过往经验并依托AI智能体，可打造符合市场需求并有竞争力的产品</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <!-- 威胁 -->
+                            <div class="p-5 bg-red-50 rounded-xl border border-red-200 swot-card">
+                                <h4 class="font-bold text-red-700 mb-4 flex items-center gap-2">
+                                    <i data-lucide="shield-alert" class="w-5 h-5"></i> 威胁 (Threats)
+                                </h4>
+                                <ul class="text-sm text-gray-700 space-y-2">
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-red-500 mt-0.5">⚠</span>
+                                        <span>AI功能落地飞快，需保持不断探索和跟进</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <span class="text-red-500 mt-0.5">⚠</span>
+                                        <span>以防先发优势被抹平</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第8页: 后续规划 -->
+        <div class="slide" data-index="8" style="background-image: url('images/image1.png'); background-size: cover; background-position: center;">
+            <div class="slide-content">
+                <h2 class="slide-title">
+                    <span class="text-primary mr-4">07</span>后续工作规划
+                </h2>
+                
+                <div class="grid grid-cols-2 gap-10 mt-8 h-full items-center">
+                    <!-- Step 1 -->
+                    <div class="card-light p-8 rounded-xl border-t-4 border-primary step-card">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
+                                <span class="text-2xl font-bold text-primary">1</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">持续夯实执掌功能</h3>
+                        </div>
+                        <p class="text-gray-600 mb-6">
+                            深度对齐2026年产品计划"门店工作台"，将过往经验与业务需求深度结合，打造更符合市场需求的产品功能。
+                        </p>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-primary"></i>
+                                <span class="text-gray-700">夯实直播、奖励方案、门店、APP配置等功能优化</span>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-primary"></i>
+                                <span class="text-gray-700">优化门店工作台，增加AI智能体</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div class="card-light p-8 rounded-xl border-t-4 border-purple-500 step-card">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-14 h-14 bg-purple-100 rounded-full flex items-center justify-center">
+                                <span class="text-2xl font-bold text-purple-600">2</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">加速业务功能AI化</h3>
+                        </div>
+                        <p class="text-gray-600 mb-6">
+                            将AI智能体深度嵌入执掌功能，实现从"手动检索"到"对话驱动"的交互升级，提升存量功能的智能化体验。
+                        </p>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                                <i data-lucide="bot" class="w-5 h-5 text-purple-500"></i>
+                                <span class="text-gray-700">AI智能体嵌入执掌功能</span>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                                <i data-lucide="message-circle" class="w-5 h-5 text-purple-500"></i>
+                                <span class="text-gray-700">实现对话驱动交互</span>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                                <i data-lucide="sparkles" class="w-5 h-5 text-purple-500"></i>
+                                <span class="text-gray-700">提升智能化体验</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第9页: 致谢 -->
+        <div class="slide" data-index="9" style="background-image: url('images/image1.png'); background-size: cover; background-position: center;">
+            <div class="flex flex-col items-center justify-center h-full text-center space-y-10 animate-fade-in-up">
+                <div>
+                    <h2 class="text-5xl font-bold text-primary mb-6">感谢聆听</h2>
+                    <p class="text-2xl text-gray-600 font-light">感谢公司提供的平台与机会，未来我将继续以结果为导向，为公司创造更多价值</p>
+                </div>
+                <div class="mt-12 pt-8 border-t border-gray-100 w-1/3">
+                    <div class="flex items-center justify-center gap-2 text-gray-400">
+                        <span>组织涨人效，就找 <strong class="text-primary font-bold">职行力</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 导航按钮 -->
+        <button id="prev-btn" class="fixed left-8 top-1/2 -translate-y-1/2 p-4 text-gray-300 hover:text-primary hover:bg-gray-50 rounded-full transition-all z-40 opacity-0 hover:opacity-100 focus:opacity-100 group">
+            <i data-lucide="chevron-left" class="w-10 h-10"></i>
+        </button>
+        <button id="next-btn" class="fixed right-8 top-1/2 -translate-y-1/2 p-4 text-gray-300 hover:text-primary hover:bg-gray-50 rounded-full transition-all z-40 opacity-0 hover:opacity-100 focus:opacity-100 group">
+            <i data-lucide="chevron-right" class="w-10 h-10"></i>
+        </button>
+
+    </div>
+
+    <script>
+        // 初始化 Lucide 图标
+        lucide.createIcons();
+        
+        // 气泡弹窗功能
+        function showTooltip(element) {
+            const tooltip = element.querySelector('.tooltip-content');
+            if (tooltip) {
+                tooltip.style.opacity = '1';
+                tooltip.style.pointerEvents = 'auto';
+            }
+        }
+        
+        function hideTooltip(element) {
+            let tooltip;
+            if (element.classList && element.classList.contains('tooltip-content')) {
+                tooltip = element;
+            } else {
+                tooltip = element.querySelector('.tooltip-content');
+            }
+            if (tooltip) {
+                tooltip.style.opacity = '0';
+                tooltip.style.pointerEvents = 'none';
+            }
+        }
+        
+        // 礼花效果
+        function createConfetti() {
+            const container = document.getElementById('confetti-container');
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+            
+            const colors = ['#5FC194', '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+            const shapes = ['circle', 'square', 'triangle'];
+            
+            for (let i = 0; i < 150; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'absolute';
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = confetti.style.width;
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-20px';
+                confetti.style.borderRadius = shapes[Math.floor(Math.random() * shapes.length)] === 'circle' ? '50%' : '0';
+                confetti.style.opacity = Math.random() * 0.7 + 0.3;
+                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                container.appendChild(confetti);
+                
+                const duration = Math.random() * 3 + 2;
+                const delay = Math.random() * 0.5;
+                
+                confetti.animate([
+                    { top: '-20px', opacity: 1, transform: `rotate(0deg) translateX(0px)` },
+                    { top: '100vh', opacity: 0, transform: `rotate(${Math.random() * 720 - 360}deg) translateX(${Math.random() * 200 - 100}px)` }
+                ], {
+                    duration: duration * 1000,
+                    delay: delay * 1000,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    fill: 'forwards'
+                });
+            }
+            
+            setTimeout(() => {
+                container.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // 检测第9页并触发礼花
+        function checkSlideForConfetti() {
+            if (currentSlide === 9) {
+                setTimeout(() => {
+                    createConfetti();
+                }, 3000);
+            }
+        }
+        
+        // 翻页功能
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        document.getElementById('total-slides').textContent = totalSlides;
+        
+        let currentSlide = 1;
+        
+        function updateSlide() {
+            slides.forEach((slide, index) => {
+                const slideNum = index + 1;
+                slide.classList.remove('active', 'prev', 'next');
+                if (slideNum === currentSlide) {
+                    slide.classList.add('active');
+                } else if (slideNum < currentSlide) {
+                    slide.classList.add('prev');
+                } else {
+                    slide.classList.add('next');
+                }
+            });
+            document.getElementById('current-slide').textContent = currentSlide;
+            checkSlideForConfetti();
+        }
+        
+        document.getElementById('prev-btn').addEventListener('click', () => {
+            if (currentSlide > 1) {
+                currentSlide--;
+                updateSlide();
+            }
+        });
+        
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentSlide < totalSlides) {
+                currentSlide++;
+                updateSlide();
+            }
+        });
+        
+        // 全屏功能
+        document.getElementById('fullscreen-toggle').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        });
+        
+        // 键盘导航
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                if (currentSlide < totalSlides) {
+                    currentSlide++;
+                    updateSlide();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlide > 1) {
+                    currentSlide--;
+                    updateSlide();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
