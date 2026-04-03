@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+body {
+    font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    user-select: none;
+    background-color: transparent;
+}
+
+/* 幻灯片容器 */
+#slide-container {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    background: transparent;
+}
+
+/* 背景水印 EXE */
+.bg-watermark {
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.04; /* 极淡的透明度 */
+}
+
+.bg-watermark-top-right {
+    top: -20vh;
+    right: -10vw;
+    width: 70vw;
+    height: 70vw;
+    color: #5FC194;
+}
+
+.bg-watermark-bottom-left {
+    bottom: -20vh;
+    left: -10vw;
+    width: 60vw;
+    height: 60vw;
+    color: #5FC194;
+}
+
+/* 单个幻灯片样式 */
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transform: scale(0.98) translateY(10px);
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 1; /* 在水印之上 */
+}
+
+.slide.active {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+    z-index: 10;
+}
+
+.slide.prev {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+.slide.next {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+/* 内容容器 */
+.slide-content {
+    width: 90%;
+    max-width: 1200px;
+    height: 80%;
+    display: flex;
+    flex-direction: column;
+    color: #333; /* 默认深色文字 */
+}
+
+.slide-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1F2937; /* 深灰标题 */
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #5FC194; /* 绿色下划线 */
+    display: inline-block;
+    width: 100%;
+}
+
+/* 动画工具类 */
+.animate-fade-in-up {
+    animation: fadeInUp 0.8s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 滚动条隐藏 */
+::-webkit-scrollbar {
+    width: 0px;
+    background: transparent;
+}
+
+/* 覆盖 Tailwind 的一些默认深色背景，适配白色主题 */
+.card-light {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.text-highlight {
+    color: #5FC194;
+}
+
+/* Slide 6: Collaboration Network Enhancements */
+.collab-net .collab-branch {
+    will-change: transform, opacity, box-shadow, border-color;
+}
+
+.slide[data-index="6"].is-active .collab-branch {
+    animation: collabBranchIn 680ms cubic-bezier(0.2, 0.9, 0.2, 1) both;
+    animation-delay: calc(var(--stagger, 0) * 120ms);
+}
+
+.collab-net .collab-center {
+    position: relative;
+}
+
+.slide[data-index="6"].is-active .collab-center::after {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 50% 50%, rgba(95, 193, 148, 0.25), rgba(95, 193, 148, 0) 60%);
+    animation: collabPulse 1800ms ease-in-out infinite;
+    pointer-events: none;
+}
+
+.slide[data-index="6"].is-active .collab-lines path {
+    stroke-dasharray: 10 10;
+    animation: collabDash 2400ms linear infinite;
+}
+
+.collab-net[data-active-key="dev"] .collab-lines path[data-key="dev"],
+.collab-net[data-active-key="qa"] .collab-lines path[data-key="qa"],
+.collab-net[data-active-key="consult"] .collab-lines path[data-key="consult"],
+.collab-net[data-active-key="ui"] .collab-lines path[data-key="ui"] {
+    stroke: #5FC194;
+    stroke-width: 3;
+    filter: drop-shadow(0 0 6px rgba(95, 193, 148, 0.35));
+}
+
+.collab-net[data-active-key="dev"] .collab-branch[data-key="dev"],
+.collab-net[data-active-key="qa"] .collab-branch[data-key="qa"],
+.collab-net[data-active-key="consult"] .collab-branch[data-key="consult"],
+.collab-net[data-active-key="ui"] .collab-branch[data-key="ui"] {
+    border-color: rgba(95, 193, 148, 0.6);
+    box-shadow: 0 10px 18px -12px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(95, 193, 148, 0.25);
+}
+
+@keyframes collabDash {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -120; }
+}
+
+@keyframes collabPulse {
+    0%, 100% { transform: scale(0.98); opacity: 0.75; }
+    50% { transform: scale(1.06); opacity: 1; }
+}
+
+@keyframes collabBranchIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Slide 3: Holographic Tech Styles */
+@keyframes scan {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
