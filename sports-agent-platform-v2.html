@@ -1,0 +1,2393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能体中台 - Active Sports</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Oswald:wght@400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --red: #E02020; --dark-red: #B31919; --blue: #1A56DB; --green: #059669;
+            --dark: #111827; --gray1: #F3F4F6; --gray2: #E5E7EB; --gray3: #374151; --white: #FFFFFF;
+            --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 4px 10px -5px rgba(0,0,0,0.02);
+            --shadow-red: 0 15px 35px -5px rgba(224,32,32,0.15);
+            --radius: 16px; --radius-sm: 10px;
+        }
+        body { font-family: 'Inter', 'PingFang SC', sans-serif; background: var(--gray1); color: var(--dark); font-size: 14px; height: 100vh; overflow: hidden; display: flex; }
+
+        .sidebar { width: 240px; background: var(--dark); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; position: relative; overflow: hidden; }
+        .sidebar::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(224,32,32,0.15), transparent 70%); pointer-events: none; }
+        .sidebar::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 120px; background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(224,32,32,0.03) 8px, rgba(224,32,32,0.03) 16px); pointer-events: none; }
+        .sidebar-logo { height: 72px; display: flex; align-items: center; padding: 0 24px; gap: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); position: relative; z-index: 1; }
+        .sidebar-logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--red), #FF4D4D); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Oswald', sans-serif; font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+        .sidebar-logo-text { font-size: 15px; font-weight: 700; letter-spacing: 2px; }
+        .sidebar-logo-text span { color: var(--red); }
+        .sidebar-menu { flex: 1; padding: 20px 0; overflow-y: auto; position: relative; z-index: 1; }
+        .menu-group { padding: 20px 24px 10px; font-size: 10px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 3px; font-weight: 700; }
+        .menu-item { display: flex; align-items: center; padding: 13px 24px; cursor: pointer; transition: all 0.2s; color: rgba(255,255,255,0.5); font-size: 14px; font-weight: 600; letter-spacing: 0.5px; position: relative; }
+        .menu-item:hover { color: #fff; background: rgba(224,32,32,0.06); }
+        .menu-item.active { color: #fff; background: linear-gradient(90deg, rgba(224,32,32,0.15), transparent); }
+        .menu-item.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: linear-gradient(180deg, var(--red), #FF4D4D); border-radius: 0 3px 3px 0; }
+        .menu-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; transform: skewX(-8deg); font-family: 'Oswald', sans-serif; letter-spacing: 1px; }
+        .sidebar-footer { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.06); position: relative; z-index: 1; }
+        .sidebar-user { display: flex; align-items: center; gap: 10px; }
+        .sidebar-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, var(--red), #FF4D4D); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+        .sidebar-userinfo { font-size: 13px; font-weight: 600; }
+        .sidebar-role { font-size: 11px; color: rgba(255,255,255,0.3); font-weight: 400; }
+
+        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .topbar { height: 60px; background: rgba(255,255,255,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--gray2); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; flex-shrink: 0; }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .topbar-title { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+        .topbar-title span { color: var(--red); }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .topbar-search { padding: 9px 16px; border: 2px solid var(--gray2); border-radius: 12px; width: 200px; font-size: 13px; outline: none; background: var(--white); font-family: inherit; font-weight: 500; transition: border-color 0.2s; }
+        .topbar-search::placeholder { color: #9CA3AF; }
+        .topbar-search:focus { border-color: var(--red); }
+        .topbar-icon-btn { width: 38px; height: 38px; border-radius: 10px; border: 2px solid var(--gray2); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; background: var(--white); transition: all 0.2s; }
+        .topbar-icon-btn:hover { border-color: var(--red); color: var(--red); }
+
+        .content { flex: 1; overflow: hidden; }
+        .page { display: none; height: 100%; }
+        .page.active { display: flex; flex-direction: column; }
+
+        .page-list { padding: 24px 28px; overflow-y: auto; flex: 1; }
+        .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+        .page-header h2 { font-size: 24px; font-weight: 900; letter-spacing: 1px; }
+        .page-header h2 span { color: var(--red); }
+        .page-desc { color: var(--gray3); font-size: 13px; margin-top: 4px; font-weight: 500; }
+
+        .btn { padding: 10px 24px; border-radius: 12px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; font-family: inherit; letter-spacing: 0.5px; }
+        .btn-primary { background: linear-gradient(135deg, var(--red), #FF4D4D); color: #fff; box-shadow: var(--shadow-red); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 20px 40px -5px rgba(224,32,32,0.25); }
+        .btn-outline { background: var(--white); color: var(--dark); border: 2px solid var(--gray2); font-weight: 600; }
+        .btn-outline:hover { border-color: var(--red); color: var(--red); }
+        .btn-ghost { background: none; border: none; color: var(--red); font-weight: 700; padding: 6px 10px; }
+        .btn-ghost:hover { background: #FEF2F2; }
+        .btn-ghost.danger { color: var(--red); }
+        .btn-ghost.danger:hover { background: #FEF2F2; }
+        .btn-blue { background: var(--blue); color: #fff; }
+        .btn-blue:hover { background: #1648B8; }
+
+        .card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--gray2); overflow: hidden; }
+        .card-header { padding: 16px 22px; border-bottom: 1px solid var(--gray1); display: flex; justify-content: space-between; align-items: center; }
+        .card-body { padding: 0; }
+        .toolbar { display: flex; gap: 10px; align-items: center; }
+        .filter-input { padding: 9px 16px; border: 2px solid var(--gray2); border-radius: 12px; width: 200px; font-size: 13px; outline: none; font-family: inherit; background: var(--white); font-weight: 500; transition: border-color 0.2s; }
+        .filter-input::placeholder { color: #9CA3AF; }
+        .filter-input:focus { border-color: var(--red); }
+        .filter-select { padding: 9px 12px; border: 2px solid var(--gray2); border-radius: var(--radius-sm); font-size: 13px; outline: none; font-family: inherit; background: var(--white); font-weight: 600; }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: var(--gray1); }
+        th { padding: 14px 18px; text-align: left; font-weight: 800; color: var(--gray3); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; }
+        td { padding: 15px 18px; border-bottom: 1px solid var(--gray1); font-size: 14px; font-weight: 500; }
+        tr:hover td { background: #FEF2F2; }
+        tr:last-child td { border-bottom: none; }
+        .td-actions { display: flex; gap: 4px; }
+
+        .status { padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; letter-spacing: 0.5px; }
+        .status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
+        .status-on { background: #ECFDF5; color: var(--green); }
+        .status-on::before { background: var(--green); }
+        .status-off { background: var(--gray1); color: var(--gray3); }
+        .status-off::before { background: #9CA3AF; }
+        .tag { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; display: inline-block; transform: skewX(-8deg); }
+        .tag-red { background: #FEF2F2; color: var(--red); }
+        .tag-blue { background: #EFF6FF; color: var(--blue); }
+        .tag-green { background: #ECFDF5; color: var(--green); }
+
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--white); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); border: 1px solid var(--gray2); position: relative; overflow: hidden; }
+        .stat-card::after { content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle, rgba(224,32,32,0.08), transparent 70%); }
+        .stat-label { font-size: 11px; color: var(--gray3); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+        .stat-value { font-size: 36px; font-weight: 700; letter-spacing: -0.5px; color: var(--red); font-family: 'Oswald', sans-serif; }
+        .stat-value.blue { color: var(--blue); }
+        .stat-value.green { color: var(--green); }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
+        .modal-overlay.show { display: flex; }
+        .modal { background: var(--white); border-radius: 20px; width: 600px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(0,0,0,0.15); }
+        .modal.wide { width: 760px; }
+        .modal-header { padding: 24px 28px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h3 { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
+        .modal-header h3 span { color: var(--red); }
+        .modal-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 10px; font-size: 16px; color: var(--gray3); }
+        .modal-close:hover { background: var(--gray1); color: var(--red); }
+        .modal-body { padding: 0 28px 28px; overflow-y: auto; flex: 1; }
+        .modal-footer { padding: 16px 28px; border-top: 1px solid var(--gray1); display: flex; justify-content: flex-end; gap: 12px; }
+
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; margin-bottom: 7px; font-size: 12px; color: var(--gray3); font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; }
+        .form-label .req { color: var(--red); }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 10px 14px; border: 2px solid var(--gray2); border-radius: var(--radius-sm); font-size: 14px; outline: none; font-family: inherit; background: var(--white); font-weight: 500; transition: border-color 0.2s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(224,32,32,0.08); }
+        .form-input::placeholder, .form-textarea::placeholder { color: #9CA3AF; }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        .form-row { display: flex; gap: 14px; }
+        .form-row .form-group { flex: 1; }
+        .form-hint { font-size: 11px; color: var(--gray3); margin-top: 5px; font-weight: 500; }
+
+        .tag-input { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border: 2px solid var(--gray2); border-radius: var(--radius-sm); min-height: 44px; align-items: center; }
+        .tag-input:focus-within { border-color: var(--red); box-shadow: 0 0 0 3px rgba(224,32,32,0.08); }
+        .tag-chip { background: #FEF2F2; color: var(--red); padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 5px; transform: skewX(-8deg); }
+        .tag-chip .remove { cursor: pointer; opacity: 0.6; transform: skewX(8deg); }
+        .tag-input input { border: none; outline: none; flex: 1; min-width: 70px; font-size: 14px; font-family: inherit; font-weight: 500; }
+
+        .upload-area { border: 2px dashed var(--gray2); border-radius: var(--radius); padding: 48px; text-align: center; cursor: pointer; background: var(--gray1); transition: all 0.2s; }
+        .upload-area:hover { border-color: var(--red); background: #FEF2F2; }
+        .upload-icon { font-size: 48px; margin-bottom: 12px; }
+        .upload-text { color: var(--gray3); font-size: 14px; font-weight: 500; }
+        .upload-text span { color: var(--red); font-weight: 700; }
+
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 14px; }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; font-weight: 500; }
+        .checkbox-item input[type="checkbox"] { accent-color: var(--red); width: 16px; height: 16px; }
+
+        .file-tree { border: 2px solid var(--gray2); border-radius: var(--radius-sm); padding: 12px; }
+        .file-tree-item { display: flex; align-items: center; padding: 10px 12px; gap: 10px; cursor: pointer; border-radius: 8px; font-weight: 500; }
+        .file-tree-item:hover { background: #FEF2F2; }
+        .file-tree-children { padding-left: 28px; }
+
+        /* ===== 知识库配置页面 ===== */
+        .kb-layout { flex: 1; display: flex; overflow: hidden; }
+        .kb-sidebar { width: 280px; background: var(--white); border-right: 1px solid var(--gray2); display: flex; flex-direction: column; flex-shrink: 0; }
+        .kb-sidebar-header { padding: 16px 18px; border-bottom: 1px solid var(--gray1); display: flex; align-items: center; justify-content: space-between; }
+        .kb-sidebar-title { font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray3); }
+        .kb-sidebar-actions { display: flex; gap: 4px; }
+        .kb-sidebar-actions button { width: 28px; height: 28px; border: 1px solid var(--gray2); border-radius: 8px; background: var(--white); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .kb-sidebar-actions button:hover { border-color: var(--red); color: var(--red); background: #FEF2F2; }
+        .kb-tree { flex: 1; overflow-y: auto; padding: 8px 10px; }
+        .kb-tree-node { user-select: none; }
+        .kb-tree-row { display: flex; align-items: center; padding: 8px 10px; gap: 8px; cursor: pointer; border-radius: 8px; font-size: 13px; font-weight: 600; transition: all 0.15s; position: relative; }
+        .kb-tree-row:hover { background: #FEF2F2; }
+        .kb-tree-row.active { background: linear-gradient(90deg, rgba(224,32,32,0.08), transparent); color: var(--red); }
+        .kb-tree-row.active::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; background: var(--red); border-radius: 0 3px 3px 0; }
+        .kb-tree-arrow { width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--gray3); transition: transform 0.2s; flex-shrink: 0; }
+        .kb-tree-arrow.expanded { transform: rotate(90deg); }
+        .kb-tree-arrow.hidden { visibility: hidden; }
+        .kb-tree-icon { font-size: 16px; flex-shrink: 0; }
+        .kb-tree-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .kb-tree-count { font-size: 11px; color: var(--gray3); font-weight: 500; background: var(--gray1); padding: 1px 7px; border-radius: 4px; }
+        .kb-tree-children { padding-left: 20px; overflow: hidden; }
+        .kb-tree-children.collapsed { display: none; }
+        .kb-tree-context { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); opacity: 0; display: flex; gap: 2px; }
+        .kb-tree-row:hover .kb-tree-context { opacity: 1; }
+        .kb-tree-ctx-btn { width: 22px; height: 22px; border: none; background: var(--white); border-radius: 4px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .kb-tree-ctx-btn:hover { background: var(--red); color: #fff; }
+        .kb-template-section { padding: 12px 18px; border-top: 1px solid var(--gray1); }
+        .kb-template-title { font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--gray3); margin-bottom: 8px; }
+        .kb-template-chip { display: inline-flex; padding: 4px 10px; border: 1px solid var(--gray2); border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; margin: 0 4px 4px 0; transition: all 0.15s; transform: skewX(-8deg); }
+        .kb-template-chip:hover { border-color: var(--red); color: var(--red); background: #FEF2F2; }
+
+        .kb-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .kb-search-bar { padding: 16px 24px; border-bottom: 1px solid var(--gray1); display: flex; gap: 12px; align-items: center; background: var(--white); }
+        .kb-search-input { flex: 1; padding: 10px 16px 10px 40px; border: 2px solid var(--gray2); border-radius: 12px; font-size: 14px; outline: none; font-family: inherit; font-weight: 500; background: var(--gray1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%239CA3AF' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 14px center no-repeat; transition: all 0.2s; }
+        .kb-search-input:focus { border-color: var(--red); background-color: var(--white); box-shadow: 0 0 0 3px rgba(224,32,32,0.08); }
+        .kb-search-input::placeholder { color: #9CA3AF; }
+        .kb-search-sort { padding: 9px 12px; border: 2px solid var(--gray2); border-radius: var(--radius-sm); font-size: 13px; outline: none; font-family: inherit; background: var(--white); font-weight: 600; }
+        .kb-search-history { position: absolute; top: 100%; left: 0; right: 0; background: var(--white); border: 2px solid var(--gray2); border-radius: 12px; margin-top: 4px; box-shadow: var(--shadow); z-index: 100; display: none; }
+        .kb-search-history.show { display: block; }
+        .kb-search-history-title { padding: 10px 14px; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray3); display: flex; justify-content: space-between; }
+        .kb-search-history-item { padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .kb-search-history-item:hover { background: #FEF2F2; color: var(--red); }
+
+        .kb-breadcrumb { padding: 12px 24px; font-size: 13px; font-weight: 600; color: var(--gray3); display: flex; align-items: center; gap: 6px; background: var(--white); border-bottom: 1px solid var(--gray1); }
+        .kb-breadcrumb span { cursor: pointer; }
+        .kb-breadcrumb span:hover { color: var(--red); }
+        .kb-breadcrumb .current { color: var(--dark); font-weight: 700; }
+        .kb-breadcrumb .sep { color: var(--gray2); }
+
+        .kb-content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+        .kb-file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+        .kb-file-card { background: var(--white); border: 2px solid var(--gray2); border-radius: var(--radius); padding: 18px; cursor: pointer; transition: all 0.2s; position: relative; }
+        .kb-file-card:hover { border-color: var(--red); box-shadow: var(--shadow-red); transform: translateY(-2px); }
+        .kb-file-card.selected { border-color: var(--red); background: #FEF2F2; }
+        .kb-file-card-icon { font-size: 36px; margin-bottom: 10px; }
+        .kb-file-card-name { font-size: 13px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 4px; }
+        .kb-file-card-meta { font-size: 11px; color: var(--gray3); font-weight: 500; }
+        .kb-file-card-check { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; background: var(--red); color: #fff; border-radius: 6px; display: none; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; }
+        .kb-file-card.selected .kb-file-card-check { display: flex; }
+        .kb-file-card-actions { position: absolute; bottom: 10px; right: 10px; display: none; gap: 4px; }
+        .kb-file-card:hover .kb-file-card-actions { display: flex; }
+
+        .kb-upload-zone { border: 2px dashed var(--gray2); border-radius: var(--radius); padding: 40px; text-align: center; cursor: pointer; background: var(--gray1); transition: all 0.2s; margin-bottom: 20px; }
+        .kb-upload-zone:hover, .kb-upload-zone.dragover { border-color: var(--red); background: #FEF2F2; }
+        .kb-upload-zone-icon { font-size: 48px; margin-bottom: 12px; }
+        .kb-upload-zone-text { color: var(--gray3); font-size: 14px; font-weight: 500; }
+        .kb-upload-zone-text span { color: var(--red); font-weight: 700; }
+        .kb-upload-zone-hint { font-size: 12px; color: var(--gray3); margin-top: 8px; font-weight: 500; }
+        .kb-upload-zone-formats { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+        .kb-format-tag { padding: 3px 10px; background: var(--white); border: 1px solid var(--gray2); border-radius: 6px; font-size: 11px; font-weight: 700; transform: skewX(-8deg); }
+
+        .kb-upload-list { margin-top: 16px; }
+        .kb-upload-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--white); border: 1px solid var(--gray2); border-radius: var(--radius-sm); margin-bottom: 8px; }
+        .kb-upload-item-icon { font-size: 24px; }
+        .kb-upload-item-info { flex: 1; }
+        .kb-upload-item-name { font-size: 13px; font-weight: 700; }
+        .kb-upload-item-size { font-size: 11px; color: var(--gray3); font-weight: 500; }
+        .kb-upload-progress { height: 4px; background: var(--gray1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+        .kb-upload-progress-bar { height: 100%; background: linear-gradient(90deg, var(--red), #FF4D4D); border-radius: 2px; transition: width 0.3s; }
+        .kb-upload-status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 6px; }
+        .kb-upload-status.uploading { background: #FEF2F2; color: var(--red); }
+        .kb-upload-status.success { background: #ECFDF5; color: var(--green); }
+        .kb-upload-status.error { background: #FEF2F2; color: var(--red); }
+        .kb-upload-status.waiting { background: var(--gray1); color: var(--gray3); }
+        .kb-upload-actions { display: flex; gap: 4px; }
+        .kb-upload-actions button { width: 28px; height: 28px; border: 1px solid var(--gray2); border-radius: 6px; background: var(--white); cursor: pointer; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+        .kb-upload-actions button:hover { border-color: var(--red); color: var(--red); }
+
+        .kb-search-results { display: none; }
+        .kb-search-results.show { display: block; }
+        .kb-search-result-item { display: flex; align-items: center; gap: 14px; padding: 14px 18px; background: var(--white); border: 1px solid var(--gray2); border-radius: var(--radius-sm); margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+        .kb-search-result-item:hover { border-color: var(--red); background: #FEF2F2; }
+        .kb-search-result-icon { font-size: 28px; }
+        .kb-search-result-info { flex: 1; }
+        .kb-search-result-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+        .kb-search-result-name mark { background: #FEF2F2; color: var(--red); padding: 0 2px; border-radius: 2px; }
+        .kb-search-result-path { font-size: 12px; color: var(--gray3); font-weight: 500; }
+        .kb-search-result-meta { font-size: 11px; color: var(--gray3); font-weight: 500; display: flex; gap: 12px; }
+
+        .kb-empty { text-align: center; padding: 60px 20px; color: var(--gray3); }
+        .kb-empty-icon { font-size: 56px; margin-bottom: 16px; }
+        .kb-empty-text { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+        .kb-empty-hint { font-size: 13px; font-weight: 400; }
+
+        .kb-folder-dialog { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .kb-folder-dialog.show { display: flex; }
+        .kb-folder-dialog-box { background: var(--white); border-radius: 20px; padding: 28px; width: 420px; box-shadow: 0 25px 60px rgba(0,0,0,0.15); }
+        .kb-folder-dialog-title { font-size: 17px; font-weight: 900; margin-bottom: 18px; }
+        .kb-folder-dialog-title span { color: var(--red); }
+        .kb-folder-dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+        .kb-move-dialog { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .kb-move-dialog.show { display: flex; }
+        .kb-move-dialog-box { background: var(--white); border-radius: 20px; padding: 28px; width: 480px; max-height: 70vh; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(0,0,0,0.15); }
+        .kb-move-dialog-title { font-size: 17px; font-weight: 900; margin-bottom: 18px; }
+        .kb-move-dialog-title span { color: var(--red); }
+        .kb-move-tree { flex: 1; overflow-y: auto; border: 2px solid var(--gray2); border-radius: var(--radius-sm); padding: 12px; max-height: 300px; }
+        .kb-move-dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+        /* ===== 插入变量面板 ===== */
+        .var-panel-wrapper { position: relative; display: inline-flex; }
+        .var-panel { position: absolute; top: 100%; right: 0; width: 360px; background: var(--white); border: 2px solid var(--gray2); border-radius: var(--radius); box-shadow: 0 20px 50px rgba(0,0,0,0.12); z-index: 500; display: none; margin-top: 4px; overflow: hidden; }
+        .var-panel.show { display: block; }
+        .var-panel-search { padding: 12px 14px; border-bottom: 1px solid var(--gray1); }
+        .var-panel-search input { width: 100%; padding: 8px 12px 8px 32px; border: 2px solid var(--gray2); border-radius: 8px; font-size: 13px; outline: none; font-family: inherit; font-weight: 500; background: var(--gray1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%239CA3AF' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.156a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E") 10px center no-repeat; transition: border-color 0.2s; }
+        .var-panel-search input:focus { border-color: var(--red); background-color: var(--white); }
+        .var-panel-search input::placeholder { color: #9CA3AF; }
+        .var-panel-body { max-height: 340px; overflow-y: auto; padding: 8px 0; }
+        .var-group-title { padding: 10px 16px 6px; font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--gray3); display: flex; align-items: center; gap: 6px; }
+        .var-group-title .var-group-badge { padding: 1px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; transform: skewX(-8deg); }
+        .var-group-badge.system { background: #EFF6FF; color: var(--blue); }
+        .var-group-badge.business { background: #ECFDF5; color: var(--green); }
+        .var-group-badge.custom { background: #FEF2F2; color: var(--red); }
+        .var-item { display: flex; align-items: center; padding: 9px 16px; gap: 10px; cursor: pointer; transition: all 0.15s; }
+        .var-item:hover { background: #FEF2F2; }
+        .var-item-code { font-family: 'Inter', monospace; font-size: 13px; font-weight: 700; color: var(--red); min-width: 140px; }
+        .var-item-desc { font-size: 12px; color: var(--gray3); font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .var-item-source { font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 4px; transform: skewX(-8deg); }
+        .var-item-source.system { background: #EFF6FF; color: var(--blue); }
+        .var-item-source.business { background: #ECFDF5; color: var(--green); }
+        .var-item-source.custom { background: #FEF2F2; color: var(--red); }
+        .var-item-delete { width: 22px; height: 22px; border: none; background: none; cursor: pointer; font-size: 12px; color: var(--gray3); border-radius: 4px; display: none; align-items: center; justify-content: center; }
+        .var-item:hover .var-item-delete { display: flex; }
+        .var-item-delete:hover { background: #FEF2F2; color: var(--red); }
+        .var-panel-footer { padding: 10px 14px; border-top: 1px solid var(--gray1); display: flex; justify-content: space-between; align-items: center; }
+        .var-add-row { display: flex; gap: 6px; align-items: center; }
+        .var-add-input { padding: 6px 10px; border: 2px solid var(--gray2); border-radius: 6px; font-size: 12px; outline: none; font-family: 'Inter', monospace; font-weight: 600; width: 140px; transition: border-color 0.2s; }
+        .var-add-input:focus { border-color: var(--red); }
+        .var-add-input::placeholder { color: #9CA3AF; font-family: 'Inter', sans-serif; }
+        .var-add-desc { padding: 6px 10px; border: 2px solid var(--gray2); border-radius: 6px; font-size: 12px; outline: none; font-family: inherit; font-weight: 500; width: 100px; transition: border-color 0.2s; }
+        .var-add-desc:focus { border-color: var(--red); }
+        .var-add-desc::placeholder { color: #9CA3AF; }
+        .var-add-btn { padding: 6px 12px; background: var(--red); color: #fff; border: none; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; transform: skewX(-8deg); letter-spacing: 0.5px; }
+        .var-add-btn:hover { background: var(--dark-red); }
+        .var-insert-hint { font-size: 11px; color: var(--gray3); font-weight: 500; }
+
+        .var-tooltip { position: absolute; background: var(--dark); color: #fff; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; z-index: 600; pointer-events: none; white-space: nowrap; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .var-tooltip.show { display: block; }
+        .var-tooltip::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 5px solid var(--dark); }
+
+        /* ===== Agent中心卡片式布局 ===== */
+        .agent-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+        .agent-card { background: var(--white); border: 2px solid var(--gray2); border-radius: var(--radius); padding: 22px; cursor: pointer; transition: all 0.25s; position: relative; display: flex; flex-direction: column; min-height: 180px; }
+        .agent-card:hover { border-color: var(--red); box-shadow: var(--shadow-red); transform: translateY(-4px); }
+        .agent-card.selected { border-color: var(--red); background: #FEF2F2; }
+        .agent-card-select { position: absolute; top: 12px; left: 12px; width: 20px; height: 20px; border: 2px solid var(--gray2); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; color: #fff; transition: all 0.15s; z-index: 2; }
+        .agent-card.selected .agent-card-select { background: var(--red); border-color: var(--red); }
+        .agent-card:hover .agent-card-select { border-color: var(--red); }
+        .agent-card-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 14px; padding-left: 28px; }
+        .agent-card-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .agent-card-icon.red { background: linear-gradient(135deg, var(--red), #FF4D4D); }
+        .agent-card-icon.blue { background: linear-gradient(135deg, var(--blue), #3B82F6); }
+        .agent-card-icon.green { background: linear-gradient(135deg, var(--green), #34D399); }
+        .agent-card-icon.dark { background: linear-gradient(135deg, var(--dark), #374151); }
+        .agent-card-icon.orange { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
+        .agent-card-icon.purple { background: linear-gradient(135deg, #8B5CF6, #A78BFA); }
+        .agent-card-info { flex: 1; min-width: 0; }
+        .agent-card-name { font-size: 15px; font-weight: 800; letter-spacing: 0.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+        .agent-card-desc { font-size: 12px; color: var(--gray3); font-weight: 500; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+        .agent-card-status { position: absolute; top: 14px; right: 14px; }
+        .agent-card-tags { display: flex; gap: 6px; margin-bottom: 14px; padding-left: 28px; flex-wrap: wrap; }
+        .agent-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--gray1); }
+        .agent-card-stats { display: flex; gap: 14px; }
+        .agent-card-stat { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--gray3); font-weight: 600; }
+        .agent-card-stat-icon { font-size: 14px; }
+        .agent-card-arrow { width: 32px; height: 32px; border: 2px solid var(--gray2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 900; color: var(--gray3); transition: all 0.2s; }
+        .agent-card:hover .agent-card-arrow { border-color: var(--red); color: var(--red); background: #FEF2F2; }
+        .agent-card-model { font-size: 11px; color: var(--gray3); font-weight: 600; padding: 2px 8px; background: var(--gray1); border-radius: 4px; }
+
+        .agent-view-btn { width: 34px; height: 34px; border: 2px solid var(--gray2); border-radius: 8px; background: var(--white); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+        .agent-view-btn:hover { border-color: var(--red); color: var(--red); }
+        .agent-view-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+        .agent-empty { text-align: center; padding: 80px 20px; color: var(--gray3); }
+        .agent-empty-icon { font-size: 64px; margin-bottom: 16px; }
+        .agent-empty-text { font-size: 18px; font-weight: 800; margin-bottom: 6px; color: var(--dark); }
+        .agent-empty-hint { font-size: 14px; font-weight: 500; }
+
+        .agent-list-view { display: none; }
+        .agent-list-view.show { display: block; }
+        .agent-card-grid.hide { display: none; }
+
+        /* ===== 引用关系弹窗 ===== */
+        .ref-dialog { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .ref-dialog.show { display: flex; }
+        .ref-dialog-box { background: var(--white); border-radius: 20px; width: 520px; max-height: 70vh; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(0,0,0,0.15); }
+        .ref-dialog-header { padding: 24px 28px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .ref-dialog-header h3 { font-size: 17px; font-weight: 900; letter-spacing: 0.5px; }
+        .ref-dialog-header h3 span { color: var(--red); }
+        .ref-dialog-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 10px; font-size: 16px; color: var(--gray3); }
+        .ref-dialog-close:hover { background: var(--gray1); color: var(--red); }
+        .ref-dialog-body { padding: 0 28px 28px; overflow-y: auto; flex: 1; }
+        .ref-dialog-subtitle { font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--gray3); margin-bottom: 12px; }
+        .ref-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 2px solid var(--gray2); border-radius: var(--radius-sm); margin-bottom: 8px; transition: all 0.15s; }
+        .ref-item:hover { border-color: var(--red); background: #FEF2F2; }
+        .ref-item-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .ref-item-icon.agent { background: linear-gradient(135deg, var(--red), #FF4D4D); }
+        .ref-item-icon.skill { background: linear-gradient(135deg, var(--blue), #3B82F6); }
+        .ref-item-info { flex: 1; }
+        .ref-item-name { font-size: 14px; font-weight: 700; }
+        .ref-item-desc { font-size: 12px; color: var(--gray3); font-weight: 500; margin-top: 2px; }
+        .ref-item-badge { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; transform: skewX(-8deg); }
+        .ref-item-badge.on { background: #ECFDF5; color: var(--green); }
+        .ref-item-badge.off { background: var(--gray1); color: var(--gray3); }
+        .ref-empty { text-align: center; padding: 30px; color: var(--gray3); font-size: 14px; font-weight: 500; }
+
+        /* ===== MCP操作对象选择 ===== */
+        .obj-select-group { border: 2px solid var(--gray2); border-radius: var(--radius-sm); overflow: hidden; }
+        .obj-category { border-bottom: 1px solid var(--gray1); }
+        .obj-category:last-child { border-bottom: none; }
+        .obj-category-title { padding: 10px 14px; font-size: 10px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--gray3); background: var(--gray1); }
+        .obj-options { padding: 6px 8px; }
+        .obj-option { display: flex; align-items: center; gap: 10px; padding: 10px 10px; cursor: pointer; border-radius: 8px; transition: all 0.15s; margin-bottom: 2px; }
+        .obj-option:hover { background: #FEF2F2; }
+        .obj-option input[type="checkbox"] { display: none; }
+        .obj-option-check { width: 20px; height: 20px; border: 2px solid var(--gray2); border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; font-size: 11px; font-weight: 900; color: #fff; }
+        .obj-option input:checked + .obj-option-check { background: var(--red); border-color: var(--red); }
+        .obj-option input:checked + .obj-option-check::after { content: '✓'; }
+        .obj-option-icon { font-size: 20px; flex-shrink: 0; }
+        .obj-option-label { font-size: 14px; font-weight: 700; min-width: 80px; }
+        .obj-option-desc { font-size: 12px; color: var(--gray3); font-weight: 500; }
+        .obj-option input:checked ~ .obj-option-label { color: var(--red); }
+        .obj-selected { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #FEF2F2; border: 2px solid rgba(224,32,32,0.2); border-radius: var(--radius-sm); margin-top: 10px; flex-wrap: wrap; }
+        .obj-selected-label { font-size: 12px; font-weight: 800; color: var(--gray3); letter-spacing: 1px; }
+        .obj-selected-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: var(--white); border: 1px solid rgba(224,32,32,0.3); border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--red); transform: skewX(-8deg); }
+        .obj-selected-tag .remove { cursor: pointer; opacity: 0.6; transform: skewX(8deg); font-size: 10px; }
+        .obj-selected-tag .remove:hover { opacity: 1; }
+
+        /* ===== Agent中心 三列工作台 ===== */
+        .workspace-topbar { height: 52px; background: var(--white); border-bottom: 1px solid var(--gray2); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .workspace-topbar-left { display: flex; align-items: center; gap: 14px; }
+        .workspace-back { cursor: pointer; font-weight: 700; color: var(--red); font-size: 13px; }
+        .workspace-back:hover { text-decoration: underline; }
+        .workspace-name { font-size: 15px; font-weight: 800; letter-spacing: 0.5px; }
+        .workspace-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--gray3); font-weight: 600; }
+        .workspace-status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .workspace { flex: 1; display: flex; overflow: hidden; }
+        .col { display: flex; flex-direction: column; overflow: hidden; }
+        .col-left { width: 340px; border-right: 1px solid var(--gray2); background: var(--white); flex-shrink: 0; }
+        .col-mid { flex: 1; background: var(--gray1); }
+        .col-right { width: 380px; border-left: 1px solid var(--gray2); background: var(--white); flex-shrink: 0; }
+
+        .col-header { height: 46px; padding: 0 18px; border-bottom: 1px solid var(--gray1); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--gray3); }
+        .col-tab { padding: 12px 14px; cursor: pointer; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray3); border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .col-tab.active { color: var(--red); border-bottom-color: var(--red); }
+        .col-tab:hover { color: var(--red); }
+
+        .debug-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .debug-messages { flex: 1; overflow-y: auto; padding: 18px; }
+        .debug-welcome { text-align: center; padding: 40px 20px; }
+        .debug-welcome-icon { width: 56px; height: 56px; margin: 0 auto 16px; background: linear-gradient(135deg, var(--red), #FF4D4D); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #fff; font-weight: 900; }
+        .debug-welcome h3 { font-size: 16px; font-weight: 800; margin-bottom: 8px; }
+        .debug-welcome p { font-size: 13px; color: var(--gray3); font-weight: 500; line-height: 1.6; }
+        .debug-msg { display: flex; gap: 10px; margin-bottom: 14px; }
+        .debug-msg.user { flex-direction: row-reverse; }
+        .debug-avatar { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+        .debug-msg.ai .debug-avatar { background: linear-gradient(135deg, var(--red), #FF4D4D); color: #fff; }
+        .debug-msg.user .debug-avatar { background: var(--blue); color: #fff; }
+        .debug-bubble { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 13px; font-weight: 500; line-height: 1.6; }
+        .debug-msg.ai .debug-bubble { background: var(--gray1); color: var(--dark); }
+        .debug-msg.user .debug-bubble { background: linear-gradient(135deg, var(--red), #FF4D4D); color: #fff; }
+        .debug-input-bar { padding: 12px 14px; border-top: 1px solid var(--gray1); display: flex; gap: 8px; }
+        .debug-input { flex: 1; padding: 10px 14px; border: 2px solid var(--gray2); border-radius: 12px; font-size: 13px; outline: none; font-family: inherit; font-weight: 500; }
+        .debug-input:focus { border-color: var(--red); }
+        .debug-send { padding: 10px 18px; background: linear-gradient(135deg, var(--red), #FF4D4D); color: #fff; border: none; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 13px; font-family: inherit; letter-spacing: 0.5px; }
+        .debug-send:hover { box-shadow: var(--shadow-red); }
+
+        .config-panel { flex: 1; overflow-y: auto; padding: 16px; }
+        .config-section { background: var(--white); border-radius: var(--radius); border: 1px solid var(--gray2); margin-bottom: 12px; overflow: hidden; }
+        .config-section-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .config-section-title { font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        .config-section-arrow { font-size: 11px; color: var(--gray3); transition: transform 0.2s; }
+        .config-section.collapsed .config-section-arrow { transform: rotate(-90deg); }
+        .config-section.collapsed .config-section-body { display: none; }
+        .config-section-body { padding: 0 18px 18px; }
+
+        .prompt-editor { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .prompt-toolbar { display: flex; gap: 4px; padding: 8px 14px; border-bottom: 1px solid var(--gray1); align-items: center; }
+        .prompt-toolbar-btn { padding: 5px 10px; border: none; background: none; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--gray3); border-radius: 6px; }
+        .prompt-toolbar-btn:hover { background: var(--gray1); color: var(--red); }
+        .prompt-area { flex: 1; overflow: hidden; }
+        .prompt-textarea { width: 100%; height: 100%; border: none; outline: none; padding: 14px; font-size: 13px; font-family: 'Inter', monospace; line-height: 1.8; resize: none; font-weight: 400; }
+        .prompt-footer { padding: 8px 14px; border-top: 1px solid var(--gray1); display: flex; justify-content: space-between; font-size: 11px; color: var(--gray3); font-weight: 600; }
+
+        .skill-card { display: flex; align-items: center; padding: 12px 14px; gap: 12px; border: 2px solid var(--gray2); border-radius: var(--radius-sm); margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
+        .skill-card:hover { border-color: var(--red); }
+        .skill-card.selected { border-color: var(--red); background: #FEF2F2; }
+        .skill-icon { width: 36px; height: 36px; background: var(--gray1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .skill-info { flex: 1; }
+        .skill-name { font-size: 13px; font-weight: 700; }
+        .skill-desc { font-size: 11px; color: var(--gray3); font-weight: 500; margin-top: 2px; }
+        .skill-check { color: var(--red); font-weight: 900; font-size: 16px; }
+        .skill-add { padding: 10px; text-align: center; color: var(--red); font-weight: 700; font-size: 13px; cursor: pointer; border: 2px dashed var(--gray2); border-radius: var(--radius-sm); margin-top: 8px; }
+        .skill-add:hover { border-color: var(--red); background: #FEF2F2; }
+
+        .mcp-card { border: 2px solid var(--gray2); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; }
+        .mcp-header { display: flex; justify-content: space-between; align-items: center; }
+        .mcp-name { font-size: 13px; font-weight: 700; }
+        .mcp-type { background: var(--blue); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; transform: skewX(-8deg); display: inline-block; margin-left: 6px; letter-spacing: 0.5px; }
+        .mcp-desc { font-size: 11px; color: var(--gray3); font-weight: 500; margin-top: 4px; }
+
+        .knowledge-file { display: flex; align-items: center; padding: 10px 12px; gap: 8px; border: 2px solid var(--gray2); border-radius: var(--radius-sm); margin-bottom: 6px; cursor: pointer; transition: all 0.2s; font-weight: 500; }
+        .knowledge-file:hover { border-color: var(--red); }
+        .knowledge-file.selected { border-color: var(--red); background: #FEF2F2; }
+        .file-icon { font-size: 16px; }
+        .file-name { flex: 1; font-size: 13px; }
+        .file-check { color: var(--red); font-weight: 900; }
+
+        .quick-q-list { display: flex; flex-direction: column; gap: 8px; }
+        .quick-q-row { display: flex; gap: 8px; align-items: center; }
+        .quick-q-row .form-input { flex: 1; }
+        .quick-q-add { padding: 8px; text-align: center; color: var(--red); font-weight: 700; font-size: 13px; cursor: pointer; border: 2px dashed var(--gray2); border-radius: var(--radius-sm); margin-top: 4px; }
+        .quick-q-add:hover { border-color: var(--red); background: #FEF2F2; }
+
+        /* ===== 创建弹窗 Step ===== */
+        .step-indicator { display: flex; gap: 8px; padding: 0 28px 20px; }
+        .step-dot { flex: 1; height: 4px; border-radius: 2px; background: var(--gray2); transition: background 0.3s; }
+        .step-dot.active { background: var(--red); }
+        .step-dot.done { background: var(--green); }
+
+        .template-options { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 8px 0; }
+        .template-card { border: 2px solid var(--gray2); border-radius: var(--radius); padding: 28px 20px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .template-card:hover { border-color: var(--red); }
+        .template-card.selected { border-color: var(--red); background: #FEF2F2; }
+        .template-icon { font-size: 40px; margin-bottom: 12px; }
+        .template-title { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+        .template-desc { font-size: 12px; color: var(--gray3); font-weight: 500; }
+
+        .tab-nav { display: flex; gap: 0; border-bottom: 2px solid var(--gray1); margin-bottom: 20px; }
+        .tab-btn { padding: 12px 18px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; background: none; color: var(--gray3); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; letter-spacing: 0.5px; }
+        .tab-btn.active { color: var(--red); border-bottom-color: var(--red); }
+        .tab-btn:hover { color: var(--red); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .agent-list-select { max-height: 200px; overflow-y: auto; border: 2px solid var(--gray2); border-radius: var(--radius-sm); }
+        .agent-list-item { padding: 12px 16px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; }
+        .agent-list-item:hover { background: #FEF2F2; }
+        .agent-list-item.selected { background: #FEF2F2; color: var(--red); font-weight: 700; }
+
+        .avatar-upload { width: 72px; height: 72px; border: 2px dashed var(--gray2); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 28px; color: var(--gray3); background: var(--gray1); }
+        .avatar-upload:hover { border-color: var(--red); color: var(--red); }
+
+        .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 16px 0; }
+        .page-btn { width: 34px; height: 34px; border: 2px solid var(--gray2); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; font-weight: 700; background: var(--white); }
+        .page-btn:hover { border-color: var(--red); color: var(--red); }
+        .page-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
+
+        .confirm-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.5); z-index: 2000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .confirm-overlay.show { display: flex; }
+        .confirm-box { background: var(--white); border-radius: 20px; padding: 32px; width: 400px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.15); }
+        .confirm-icon { font-size: 48px; margin-bottom: 16px; }
+        .confirm-title { font-size: 18px; font-weight: 900; margin-bottom: 8px; }
+        .confirm-desc { font-size: 14px; color: var(--gray3); font-weight: 500; margin-bottom: 24px; }
+        .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+
+        .toast { position: fixed; top: 24px; right: 24px; z-index: 3000; padding: 14px 24px; border-radius: 12px; font-weight: 700; font-size: 14px; display: none; animation: slideIn 0.3s ease; }
+        .toast.show { display: flex; align-items: center; gap: 8px; }
+        .toast-success { background: var(--green); color: #fff; }
+        .toast-error { background: var(--red); color: #fff; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-icon trae-browser-inspect-draggable">EXE</div>
+            <div class="sidebar-logo-text trae-browser-inspect-draggable">Eaip-<span>鞋服行业</span></div>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-group">配置管理</div>
+            <div class="menu-item active" onclick="switchPage('model',this)">模型配置</div>
+            <div class="menu-item" onclick="switchPage('knowledge',this)">知识库配置</div>
+            <div class="menu-item" onclick="switchPage('prompt',this)">提示词配置</div>
+            <div class="menu-group">智能体</div>
+            <div class="menu-item" onclick="switchPage('agent',this)">Agent中心<span class="menu-badge">NEW</span></div>
+            <div class="menu-item" onclick="switchPage('skill',this)">技能库</div>
+                            <div class="menu-item" onclick="switchPage('mcp',this)">插件库</div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="sidebar-user">
+                <div class="sidebar-avatar">A</div>
+                <div><div class="sidebar-userinfo">Admin</div><div class="sidebar-role">超级管理员</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="topbar-title" id="topbarTitle">模型<span>配置</span></div>
+            </div>
+            <div class="topbar-right">
+                <input class="topbar-search" placeholder="搜索...">
+                <div class="topbar-icon-btn">🔔</div>
+                <div class="topbar-icon-btn">⚙</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- 模型配置 -->
+            <div class="page active" id="page-model">
+                <div class="page-list">
+                    <div class="stats-row">
+                        <div class="stat-card"><div class="stat-label">模型总数</div><div class="stat-value">12</div></div>
+                        <div class="stat-card"><div class="stat-label">已启用</div><div class="stat-value green">8</div></div>
+                        <div class="stat-card"><div class="stat-label">已停用</div><div class="stat-value blue">4</div></div>
+                        <div class="stat-card"><div class="stat-label">自定义配置</div><div class="stat-value">3</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="toolbar">
+                                <input class="filter-input" placeholder="搜索模型...">
+                                <select class="filter-select"><option>全部厂商</option><option>系统自带</option><option>自定义配置</option></select>
+                                <select class="filter-select"><option>全部状态</option><option>已启用</option><option>已停用</option></select>
+                            </div>
+                            <button class="btn btn-primary" onclick="showModal('modelModal')">+ 新增模型</button>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead><tr><th>模型名称</th><th>API Name</th><th>厂商</th><th>版本</th><th>状态</th><th>操作</th></tr></thead>
+                                <tbody>
+                                    <tr><td style="font-weight:700">GPT-4o</td><td>gpt-4o</td><td><span class="tag tag-blue">系统自带</span></td><td>v2024-08</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('modelModal')">编辑</button><button class="btn-ghost" onclick="toggleStatus(this)">停用</button><button class="btn-ghost danger" onclick="confirmDelete('模型 GPT-4o')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">GLM-4</td><td>glm-4</td><td><span class="tag tag-blue">系统自带</span></td><td>v2024-06</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('modelModal')">编辑</button><button class="btn-ghost" onclick="toggleStatus(this)">停用</button><button class="btn-ghost danger" onclick="confirmDelete('模型 GLM-4')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">文心一言4.0</td><td>ernie-4.0</td><td><span class="tag tag-blue">系统自带</span></td><td>v2024-05</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('modelModal')">编辑</button><button class="btn-ghost" onclick="toggleStatus(this)">停用</button><button class="btn-ghost danger" onclick="confirmDelete('模型 文心一言4.0')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">通义千问-Max</td><td>qwen-max</td><td><span class="tag tag-red">自定义</span></td><td>v2024-09</td><td><span class="status status-off">已停用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('modelModal')">编辑</button><button class="btn-ghost" onclick="toggleStatus(this)">启用</button><button class="btn-ghost danger" onclick="confirmDelete('模型 通义千问-Max')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">DeepSeek-V2</td><td>deepseek-v2</td><td><span class="tag tag-red">自定义</span></td><td>v2024-08</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('modelModal')">编辑</button><button class="btn-ghost" onclick="toggleStatus(this)">停用</button><button class="btn-ghost danger" onclick="confirmDelete('模型 DeepSeek-V2')">删除</button></td></tr>
+                                </tbody>
+                            </table>
+                            <div class="pagination">
+                                <div class="page-btn">‹</div>
+                                <div class="page-btn active">1</div>
+                                <div class="page-btn">2</div>
+                                <div class="page-btn">›</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 知识库配置 -->
+            <div class="page" id="page-knowledge">
+                <div class="kb-layout">
+                    <div class="kb-sidebar">
+                        <div class="kb-sidebar-header">
+                            <div class="kb-sidebar-title">文件夹结构</div>
+                            <div class="kb-sidebar-actions">
+                                <button title="新建文件夹" onclick="showKbFolderDialog('new')">+</button>
+                                <button title="刷新" onclick="showToast('已刷新！')">↻</button>
+                            </div>
+                        </div>
+                        <div class="kb-tree" id="kbTree">
+                            <div class="kb-tree-node">
+                                <div class="kb-tree-row active" onclick="selectKbFolder(this,'全部文件')" data-path="全部文件">
+                                    <span class="kb-tree-arrow expanded">▶</span>
+                                    <span class="kb-tree-icon">📂</span>
+                                    <span class="kb-tree-label">全部文件</span>
+                                    <span class="kb-tree-count">128</span>
+                                    <div class="kb-tree-context">
+                                        <button class="kb-tree-ctx-btn" title="新建子文件夹" onclick="event.stopPropagation();showKbFolderDialog('new','全部文件')">+</button>
+                                    </div>
+                                </div>
+                                <div class="kb-tree-children">
+                                    <div class="kb-tree-node">
+                                        <div class="kb-tree-row" onclick="selectKbFolder(this,'产品文档库')" data-path="产品文档库">
+                                            <span class="kb-tree-arrow expanded">▶</span>
+                                            <span class="kb-tree-icon">📁</span>
+                                            <span class="kb-tree-label">产品文档库</span>
+                                            <span class="kb-tree-count">24</span>
+                                            <div class="kb-tree-context">
+                                                <button class="kb-tree-ctx-btn" title="新建" onclick="event.stopPropagation();showKbFolderDialog('new','产品文档库')">+</button>
+                                                <button class="kb-tree-ctx-btn" title="重命名" onclick="event.stopPropagation();showKbFolderDialog('rename','产品文档库')">✎</button>
+                                                <button class="kb-tree-ctx-btn" title="移动" onclick="event.stopPropagation();showKbMoveDialog('产品文档库')">⇄</button>
+                                                <button class="kb-tree-ctx-btn" title="删除" onclick="event.stopPropagation();confirmDelete('文件夹 产品文档库')">✕</button>
+                                            </div>
+                                        </div>
+                                        <div class="kb-tree-children">
+                                            <div class="kb-tree-node">
+                                                <div class="kb-tree-row" onclick="selectKbFolder(this,'需求文档')" data-path="产品文档库/需求文档">
+                                                    <span class="kb-tree-arrow hidden">▶</span>
+                                                    <span class="kb-tree-icon">📁</span>
+                                                    <span class="kb-tree-label">需求文档</span>
+                                                    <span class="kb-tree-count">8</span>
+                                                    <div class="kb-tree-context">
+                                                        <button class="kb-tree-ctx-btn" title="重命名" onclick="event.stopPropagation();showKbFolderDialog('rename','需求文档')">✎</button>
+                                                        <button class="kb-tree-ctx-btn" title="移动" onclick="event.stopPropagation();showKbMoveDialog('需求文档')">⇄</button>
+                                                        <button class="kb-tree-ctx-btn" title="删除" onclick="event.stopPropagation();confirmDelete('文件夹 需求文档')">✕</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="kb-tree-node">
+                                                <div class="kb-tree-row" onclick="selectKbFolder(this,'设计文档')" data-path="产品文档库/设计文档">
+                                                    <span class="kb-tree-arrow hidden">▶</span>
+                                                    <span class="kb-tree-icon">📁</span>
+                                                    <span class="kb-tree-label">设计文档</span>
+                                                    <span class="kb-tree-count">6</span>
+                                                    <div class="kb-tree-context">
+                                                        <button class="kb-tree-ctx-btn" title="重命名" onclick="event.stopPropagation();showKbFolderDialog('rename','设计文档')">✎</button>
+                                                        <button class="kb-tree-ctx-btn" title="删除" onclick="event.stopPropagation();confirmDelete('文件夹 设计文档')">✕</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="kb-tree-node">
+                                        <div class="kb-tree-row" onclick="selectKbFolder(this,'培训资料')" data-path="培训资料">
+                                            <span class="kb-tree-arrow expanded">▶</span>
+                                            <span class="kb-tree-icon">📁</span>
+                                            <span class="kb-tree-label">培训资料</span>
+                                            <span class="kb-tree-count">36</span>
+                                            <div class="kb-tree-context">
+                                                <button class="kb-tree-ctx-btn" title="新建" onclick="event.stopPropagation();showKbFolderDialog('new','培训资料')">+</button>
+                                                <button class="kb-tree-ctx-btn" title="重命名" onclick="event.stopPropagation();showKbFolderDialog('rename','培训资料')">✎</button>
+                                                <button class="kb-tree-ctx-btn" title="移动" onclick="event.stopPropagation();showKbMoveDialog('培训资料')">⇄</button>
+                                                <button class="kb-tree-ctx-btn" title="删除" onclick="event.stopPropagation();confirmDelete('文件夹 培训资料')">✕</button>
+                                            </div>
+                                        </div>
+                                        <div class="kb-tree-children">
+                                            <div class="kb-tree-node">
+                                                <div class="kb-tree-row" onclick="selectKbFolder(this,'新员工培训')" data-path="培训资料/新员工培训">
+                                                    <span class="kb-tree-arrow hidden">▶</span>
+                                                    <span class="kb-tree-icon">📁</span>
+                                                    <span class="kb-tree-label">新员工培训</span>
+                                                    <span class="kb-tree-count">12</span>
+                                                    <div class="kb-tree-context">
+                                                        <button class="kb-tree-ctx-btn" title="重命名" onclick="event.stopPropagation();showKbFolderDialog('rename','新员工培训')">✎</button>
+                                                        <button class="kb-tree-ctx-btn" title="删除" onclick="event.stopPropagation();confirmDelete('文件夹 新员工培训')">✕</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="kb-tree-node">
+                                                <div class="kb-tree-row" onclick="selectKbFolder(this,'技能提升')" data-path="培训资料/技能提升">
+                                                    <span class="kb-tree-arrow hidden">▶</span>
+                                                    <span class="kb-tree-icon">📁</span>
+                                                    <span class="kb-tree-label">技能提升</span>
+                                                    <span class="kb-tree-count">10</span>
+                                                    <div class="kb-tree-context">
+                                                        <button class="kb-tree-ctx-btn" title="重命名" onclick="event.stopPropagation();showKbFolderDialog('rename','技能提升')">✎</button>
+                                                        <button class="kb-tree-ctx-btn" title="删除" onclick="event.stopPropagation();confirmDelete('文件夹 技能提升')">✕</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="kb-tree-node">
+                                        <div class="kb-tree-row" onclick="selectKbFolder(this,'接口文档')" data-path="接口文档">
+                                            <span class="kb-tree-arrow">▶</span>
+                                            <span class="kb-tree-icon">📁</span>
+                                            <span class="kb-tree-label">接口文档</span>
+                                            <span class="kb-tree-count">18</span>
+                                            <div class="kb-tree-context">
+                                                <button class="kb-tree-ctx-btn" title="新建" onclick="event.stopPropagation();showKbFolderDialog('new','接口文档')">+</button>
+                                                <button class="kb-tree-ctx-btn" title="重命名" onclick="event.stopPropagation();showKbFolderDialog('rename','接口文档')">✎</button>
+                                                <button class="kb-tree-ctx-btn" title="删除" onclick="event.stopPropagation();confirmDelete('文件夹 接口文档')">✕</button>
+                                            </div>
+                                        </div>
+                                        <div class="kb-tree-children collapsed">
+                                            <div class="kb-tree-node">
+                                                <div class="kb-tree-row" onclick="selectKbFolder(this,'内部API')" data-path="接口文档/内部API">
+                                                    <span class="kb-tree-arrow hidden">▶</span>
+                                                    <span class="kb-tree-icon">📁</span>
+                                                    <span class="kb-tree-label">内部API</span>
+                                                    <span class="kb-tree-count">10</span>
+                                                </div>
+                                            </div>
+                                            <div class="kb-tree-node">
+                                                <div class="kb-tree-row" onclick="selectKbFolder(this,'第三方API')" data-path="接口文档/第三方API">
+                                                    <span class="kb-tree-arrow hidden">▶</span>
+                                                    <span class="kb-tree-icon">📁</span>
+                                                    <span class="kb-tree-label">第三方API</span>
+                                                    <span class="kb-tree-count">8</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="kb-tree-node">
+                                        <div class="kb-tree-row" onclick="selectKbFolder(this,'课程数据')" data-path="课程数据">
+                                            <span class="kb-tree-arrow hidden">▶</span>
+                                            <span class="kb-tree-icon">📁</span>
+                                            <span class="kb-tree-label">课程数据</span>
+                                            <span class="kb-tree-count">18</span>
+                                            <div class="kb-tree-context">
+                                                <button class="kb-tree-ctx-btn" title="重命名" onclick="event.stopPropagation();showKbFolderDialog('rename','课程数据')">✎</button>
+                                                <button class="kb-tree-ctx-btn" title="删除" onclick="event.stopPropagation();confirmDelete('文件夹 课程数据')">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="kb-tree-node">
+                                        <div class="kb-tree-row" onclick="selectKbFolder(this,'产品截图')" data-path="产品截图">
+                                            <span class="kb-tree-arrow hidden">▶</span>
+                                            <span class="kb-tree-icon">📁</span>
+                                            <span class="kb-tree-label">产品截图</span>
+                                            <span class="kb-tree-count">50</span>
+                                            <div class="kb-tree-context">
+                                                <button class="kb-tree-ctx-btn" title="重命名" onclick="event.stopPropagation();showKbFolderDialog('rename','产品截图')">✎</button>
+                                                <button class="kb-tree-ctx-btn" title="删除" onclick="event.stopPropagation();confirmDelete('文件夹 产品截图')">✕</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="kb-template-section">
+                            <div class="kb-template-title">分类模板</div>
+                            <span class="kb-template-chip" onclick="showToast('已创建文件夹：产品文档库')">产品文档库</span>
+                            <span class="kb-template-chip" onclick="showToast('已创建文件夹：培训资料')">培训资料</span>
+                            <span class="kb-template-chip" onclick="showToast('已创建文件夹：接口文档')">接口文档</span>
+                            <span class="kb-template-chip" onclick="showToast('已创建文件夹：运营数据')">运营数据</span>
+                            <span class="kb-template-chip" onclick="showToast('已创建文件夹：客户资料')">客户资料</span>
+                        </div>
+                    </div>
+
+                    <div class="kb-main">
+                        <div class="kb-search-bar" style="position:relative">
+                            <input class="kb-search-input" id="kbSearchInput" placeholder="搜索文件名、标签..." oninput="kbSearch(this.value)" onfocus="showKbHistory()" onblur="setTimeout(()=>hideKbHistory(),200)">
+                            <select class="kb-search-sort" id="kbSearchSort" onchange="kbSearch(document.getElementById('kbSearchInput').value)">
+                                <option value="relevance">按相关性</option>
+                                <option value="time">按修改时间</option>
+                                <option value="name">按文件名</option>
+                            </select>
+                            <button class="btn btn-primary" style="padding:9px 18px;font-size:12px" onclick="document.getElementById('kbUploadInput').click()">上传文件</button>
+                            <input type="file" id="kbUploadInput" multiple accept=".pdf,.docx,.md,.txt,.xlsx,.png,.jpg" style="display:none" onchange="handleKbUpload(this.files)">
+                        </div>
+                        <div class="kb-search-history" id="kbSearchHistory">
+                            <div class="kb-search-history-title"><span>搜索历史</span><span style="cursor:pointer;color:var(--red)" onclick="clearKbHistory()">清空</span></div>
+                            <div id="kbHistoryList"></div>
+                        </div>
+
+                        <div class="kb-breadcrumb" id="kbBreadcrumb">
+                            <span onclick="selectKbFolder(document.querySelector('.kb-tree-row[data-path=\"全部文件\"]'),'全部文件')">全部文件</span>
+                        </div>
+
+                        <div class="kb-content" id="kbContent">
+                            <div class="kb-upload-zone" id="kbUploadZone" onclick="document.getElementById('kbUploadInput').click()">
+                                <div class="kb-upload-zone-icon">📤</div>
+                                <div class="kb-upload-zone-text">拖拽文件到此处，或 <span>点击上传</span></div>
+                                <div class="kb-upload-zone-hint">单文件最大 10MB · 支持批量上传</div>
+                                <div class="kb-upload-zone-formats">
+                                    <span class="kb-format-tag">PDF</span>
+                                    <span class="kb-format-tag">DOCX</span>
+                                    <span class="kb-format-tag">MD</span>
+                                    <span class="kb-format-tag">TXT</span>
+                                    <span class="kb-format-tag">XLSX</span>
+                                    <span class="kb-format-tag">PNG</span>
+                                </div>
+                            </div>
+
+                            <div class="kb-upload-list" id="kbUploadList" style="display:none"></div>
+
+                            <div id="kbFileView">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                                    <div style="font-size:14px;font-weight:800;letter-spacing:0.5px">全部文件 <span style="color:var(--gray3);font-weight:500;font-size:12px" id="kbFileCount">128 个文件</span></div>
+                                    <div style="display:flex;gap:6px">
+                                        <button class="btn btn-outline" style="padding:6px 12px;font-size:11px" onclick="kbBatchDelete()">批量删除</button>
+                                    </div>
+                                </div>
+                                <div class="kb-file-grid" id="kbFileGrid">
+                                    <div class="kb-file-card" onclick="toggleKbFileSelect(this)">
+                                        <div class="kb-file-card-check">✓</div>
+                                        <div class="kb-file-card-icon">📄</div>
+                                        <div class="kb-file-card-name">产品需求文档v3.2.pdf</div>
+                                        <div class="kb-file-card-meta">PDF · 2.4MB · 2024-09-15</div>
+                                    </div>
+                                    <div class="kb-file-card" onclick="toggleKbFileSelect(this)">
+                                        <div class="kb-file-card-check">✓</div>
+                                        <div class="kb-file-card-icon">📄</div>
+                                        <div class="kb-file-card-name">API接口说明.docx</div>
+                                        <div class="kb-file-card-meta">DOCX · 1.8MB · 2024-09-14</div>
+                                    </div>
+                                    <div class="kb-file-card" onclick="toggleKbFileSelect(this)">
+                                        <div class="kb-file-card-check">✓</div>
+                                        <div class="kb-file-card-icon">📄</div>
+                                        <div class="kb-file-card-name">新员工培训手册.pdf</div>
+                                        <div class="kb-file-card-meta">PDF · 5.2MB · 2024-09-12</div>
+                                    </div>
+                                    <div class="kb-file-card" onclick="toggleKbFileSelect(this)">
+                                        <div class="kb-file-card-check">✓</div>
+                                        <div class="kb-file-card-icon">📊</div>
+                                        <div class="kb-file-card-name">课程评分数据.xlsx</div>
+                                        <div class="kb-file-card-meta">XLSX · 890KB · 2024-09-10</div>
+                                    </div>
+                                    <div class="kb-file-card" onclick="toggleKbFileSelect(this)">
+                                        <div class="kb-file-card-check">✓</div>
+                                        <div class="kb-file-card-icon">📝</div>
+                                        <div class="kb-file-card-name">部署指南.md</div>
+                                        <div class="kb-file-card-meta">MD · 45KB · 2024-09-09</div>
+                                    </div>
+                                    <div class="kb-file-card" onclick="toggleKbFileSelect(this)">
+                                        <div class="kb-file-card-check">✓</div>
+                                        <div class="kb-file-card-icon">🖼</div>
+                                        <div class="kb-file-card-name">产品首页截图.png</div>
+                                        <div class="kb-file-card-meta">PNG · 3.1MB · 2024-09-08</div>
+                                    </div>
+                                    <div class="kb-file-card" onclick="toggleKbFileSelect(this)">
+                                        <div class="kb-file-card-check">✓</div>
+                                        <div class="kb-file-card-icon">📄</div>
+                                        <div class="kb-file-card-name">系统架构设计.pdf</div>
+                                        <div class="kb-file-card-meta">PDF · 4.7MB · 2024-09-07</div>
+                                    </div>
+                                    <div class="kb-file-card" onclick="toggleKbFileSelect(this)">
+                                        <div class="kb-file-card-check">✓</div>
+                                        <div class="kb-file-card-icon">📝</div>
+                                        <div class="kb-file-card-name">开发规范.txt</div>
+                                        <div class="kb-file-card-meta">TXT · 12KB · 2024-09-06</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="kb-search-results" id="kbSearchResults"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 提示词配置 -->
+            <div class="page" id="page-prompt">
+                <div class="page-list">
+                    <div class="stats-row">
+                        <div class="stat-card"><div class="stat-label">提示词总数</div><div class="stat-value">24</div></div>
+                        <div class="stat-card"><div class="stat-label">已启用</div><div class="stat-value green">18</div></div>
+                        <div class="stat-card"><div class="stat-label">场景分类</div><div class="stat-value blue">5</div></div>
+                        <div class="stat-card"><div class="stat-label">版本记录</div><div class="stat-value">67</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="toolbar">
+                                <input class="filter-input" placeholder="搜索提示词...">
+                                <select class="filter-select"><option>全部场景</option><option>课程推荐</option><option>学习规划</option><option>知识问答</option><option>数据分析</option><option>内容生成</option></select>
+                                <select class="filter-select"><option>全部状态</option><option>已启用</option><option>已停用</option></select>
+                            </div>
+                            <button class="btn btn-primary" onclick="showModal('promptModal')">+ 新增提示词</button>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead><tr><th>提示词名称</th><th>场景分类</th><th>版本</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
+                                <tbody>
+                                    <tr><td style="font-weight:700">课程推荐助手</td><td><span class="tag tag-red">课程推荐</span></td><td>v3.2</td><td><span class="status status-on">已启用</span></td><td>2024-09-15</td><td class="td-actions"><button class="btn-ghost" onclick="showModal('promptModal')">编辑</button><button class="btn-ghost">版本历史</button><button class="btn-ghost" onclick="toggleStatus(this)">停用</button><button class="btn-ghost danger" onclick="confirmDelete('提示词 课程推荐助手')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">学习规划师</td><td><span class="tag tag-blue">学习规划</span></td><td>v2.1</td><td><span class="status status-on">已启用</span></td><td>2024-09-12</td><td class="td-actions"><button class="btn-ghost" onclick="showModal('promptModal')">编辑</button><button class="btn-ghost">版本历史</button><button class="btn-ghost" onclick="toggleStatus(this)">停用</button><button class="btn-ghost danger" onclick="confirmDelete('提示词 学习规划师')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">知识问答引擎</td><td><span class="tag tag-green">知识问答</span></td><td>v1.8</td><td><span class="status status-on">已启用</span></td><td>2024-09-10</td><td class="td-actions"><button class="btn-ghost" onclick="showModal('promptModal')">编辑</button><button class="btn-ghost">版本历史</button><button class="btn-ghost" onclick="toggleStatus(this)">停用</button><button class="btn-ghost danger" onclick="confirmDelete('提示词 知识问答引擎')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">数据分析师</td><td><span class="tag tag-blue">数据分析</span></td><td>v1.5</td><td><span class="status status-off">已停用</span></td><td>2024-09-08</td><td class="td-actions"><button class="btn-ghost" onclick="showModal('promptModal')">编辑</button><button class="btn-ghost">版本历史</button><button class="btn-ghost" onclick="toggleStatus(this)">启用</button><button class="btn-ghost danger" onclick="confirmDelete('提示词 数据分析师')">删除</button></td></tr>
+                                </tbody>
+                            </table>
+                            <div class="pagination">
+                                <div class="page-btn">‹</div>
+                                <div class="page-btn active">1</div>
+                                <div class="page-btn">2</div>
+                                <div class="page-btn">›</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent中心 - 列表 -->
+            <div class="page" id="page-agent">
+                <div class="page-list" style="padding:24px 28px;overflow-y:auto;flex:1">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                        <div>
+                            <div style="font-size:24px;font-weight:900;letter-spacing:1px">Agent<span style="color:var(--red)">中心</span></div>
+                            <div style="font-size:13px;color:var(--gray3);font-weight:500;margin-top:4px">管理企业级智能体，配置技能与知识</div>
+                        </div>
+                        <div style="display:flex;gap:10px;align-items:center">
+                            <button class="btn btn-outline" id="agentBatchBtn" style="display:none;padding:9px 18px;font-size:12px" onclick="agentBatchAction('delete')">批量删除</button>
+                            <button class="btn btn-primary" onclick="showModal('agentCreateModal');resetAgentCreate()">+ 创建Agent</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-bottom:20px;align-items:center;flex-wrap:wrap">
+                        <input class="filter-input" id="agentSearchInput" placeholder="搜索Agent名称..." oninput="filterAgentCards()" style="width:240px">
+                        <select class="filter-select" id="agentTypeFilter" onchange="filterAgentCards()"><option value="">全部类型</option><option value="培训">培训</option><option value="客服">客服</option><option value="运营">运营</option><option value="销售">销售</option></select>
+                        <select class="filter-select" id="agentStatusFilter" onchange="filterAgentCards()"><option value="">全部状态</option><option value="on">已启用</option><option value="off">已停用</option></select>
+                        <select class="filter-select" id="agentTimeFilter" onchange="filterAgentCards()"><option value="">全部时间</option><option value="7">最近7天</option><option value="30">最近30天</option><option value="90">最近90天</option></select>
+                        <div style="flex:1"></div>
+                        <div style="display:flex;gap:4px">
+                            <button class="agent-view-btn active" id="agentGridView" onclick="switchAgentView('grid')" title="卡片视图">▦</button>
+                            <button class="agent-view-btn" id="agentListView" onclick="switchAgentView('list')" title="列表视图">☰</button>
+                        </div>
+                    </div>
+                    <div class="agent-card-grid" id="agentCardGrid"></div>
+                    <div class="agent-empty" id="agentEmpty" style="display:none">
+                        <div class="agent-empty-icon">🤖</div>
+                        <div class="agent-empty-text">暂无智能体</div>
+                        <div class="agent-empty-hint">点击右上角创建首个Agent</div>
+                        <button class="btn btn-primary" style="margin-top:16px" onclick="showModal('agentCreateModal');resetAgentCreate()">+ 创建Agent</button>
+                    </div>
+                    <div class="pagination" id="agentPagination" style="margin-top:20px"></div>
+                </div>
+            </div>
+
+            <!-- Agent中心 - 三列工作台 -->
+            <div class="page" id="page-agent-workspace">
+                <div class="workspace-topbar">
+                    <div class="workspace-topbar-left">
+                        <div class="workspace-back" onclick="switchPage('agent',document.querySelectorAll('.menu-item')[3])">← 返回列表</div>
+                        <div style="width:1px;height:16px;background:var(--gray2)"></div>
+                        <div class="workspace-name" id="workspaceName">课程推荐Agent</div>
+                        <div class="workspace-status"><span class="dot"></span>编辑中</div>
+                    </div>
+                    <div style="display:flex;gap:10px">
+                        <button class="btn btn-outline" style="padding:8px 20px;font-size:12px">保存草稿</button>
+                        <button class="btn btn-primary" style="padding:8px 20px;font-size:12px">发布</button>
+                    </div>
+                </div>
+                <div class="workspace">
+                    <!-- 左列：调试 -->
+                    <div class="col col-left">
+                        <div class="col-header"><span>实时调试</span><button class="btn-ghost" style="font-size:11px" onclick="clearDebug()">清空</button></div>
+                        <div class="debug-panel">
+                            <div class="debug-messages" id="debugMessages">
+                                <div class="debug-welcome" id="debugWelcome">
+                                    <div class="debug-welcome-icon">AI</div>
+                                    <h3 id="welcomeTitle">您好呀！我是EXE课小智</h3>
+                                    <p id="welcomeContent">告诉我~你的学习方向、学习目标，我会为你推荐合适的课程。</p>
+                                </div>
+                            </div>
+                            <div class="debug-input-bar">
+                                <input class="debug-input" id="debugInput" placeholder="输入测试消息..." onkeypress="if(event.key==='Enter')sendDebug()">
+                                <button class="debug-send" onclick="sendDebug()">发送</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 中列：智能体配置 -->
+                    <div class="col col-mid">
+                        <div class="col-header"><span>智能体配置</span></div>
+                        <div class="config-panel">
+                            <div class="config-section">
+                                <div class="config-section-header" onclick="toggleSection(this)"><div class="config-section-title">Agent 信息</div><span class="config-section-arrow">▼</span></div>
+                                <div class="config-section-body">
+                                    <div class="form-row"><div class="form-group"><label class="form-label">名称<span class="req">*</span></label><input class="form-input" value="课程推荐Agent" onchange="document.getElementById('workspaceName').textContent=this.value"></div><div class="form-group"><label class="form-label">API Name<span class="req">*</span></label><input class="form-input" value="course-recommend"></div></div>
+                                    <div class="form-group"><label class="form-label">头像</label><div class="avatar-upload">+</div></div>
+                                    <div class="form-group"><label class="form-label">角色描述</label><textarea class="form-textarea">你是一个专业的课程学习顾问，名为「EXE课小智」。根据用户的学习需求精准推荐高口碑课程。</textarea></div>
+                                    <div class="form-group"><label class="form-label">工作内容说明</label><textarea class="form-textarea">负责理解用户学习需求，从课程库中筛选匹配课程，提供个性化推荐方案。</textarea></div>
+                                    <div class="form-group"><label class="form-label">类型标签（多选）</label><div class="tag-input"><span class="tag-chip">培训<span class="remove" onclick="this.parentElement.remove()">✕</span></span><span class="tag-chip">课程<span class="remove" onclick="this.parentElement.remove()">✕</span></span><input placeholder="输入后回车添加"></div><div class="form-hint">仅匹配对应标签的Agent可被AI助理封装</div></div>
+                                    <div class="form-group"><label class="form-label">开放对象</label><select class="form-select"><option>全员</option><option>指定部门</option><option>指定人员</option></select></div>
+                                </div>
+                            </div>
+                            <div class="config-section">
+                                <div class="config-section-header" onclick="toggleSection(this)"><div class="config-section-title">模型信息</div><span class="config-section-arrow">▼</span></div>
+                                <div class="config-section-body">
+                                    <div class="form-row"><div class="form-group"><label class="form-label">模型厂商</label><select class="form-select"><option>系统自带</option><option>自定义配置</option></select></div><div class="form-group"><label class="form-label">模型选择</label><select class="form-select"><option>GPT-4o</option><option>GLM-4</option><option>文心一言4.0</option><option>DeepSeek-V2</option></select></div></div>
+                                </div>
+                            </div>
+                            <div class="config-section">
+                                <div class="config-section-header" onclick="toggleSection(this)"><div class="config-section-title">初始化信息</div><span class="config-section-arrow">▼</span></div>
+                                <div class="config-section-body">
+                                    <div class="form-group"><label class="form-label">欢迎语标题</label><input class="form-input" value="您好呀！我是EXE课小智" id="initTitle" oninput="updateWelcome()"></div>
+                                    <div class="form-group"><label class="form-label">欢迎语内容</label><textarea class="form-textarea" id="initContent" oninput="updateWelcome()">告诉我~你的学习方向、学习目标，我会为你推荐合适的课程。</textarea></div>
+                                    <div class="form-group"><label class="form-label">推荐问题（最多5条）</label>
+                                        <div class="quick-q-list" id="quickQList">
+                                            <div class="quick-q-row"><input class="form-input" value="课程标签一"><button class="btn-ghost danger" style="font-size:11px" onclick="this.parentElement.remove()">删除</button></div>
+                                            <div class="quick-q-row"><input class="form-input" value="课程标签二"><button class="btn-ghost danger" style="font-size:11px" onclick="this.parentElement.remove()">删除</button></div>
+                                            <div class="quick-q-row"><input class="form-input" value="课程标签三"><button class="btn-ghost danger" style="font-size:11px" onclick="this.parentElement.remove()">删除</button></div>
+                                        </div>
+                                        <div class="quick-q-add" onclick="addQuickQ()">+ 添加推荐问题</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="config-section">
+                                <div class="config-section-header" onclick="toggleSection(this)"><div class="config-section-title">技能配置</div><span class="config-section-arrow">▼</span></div>
+                                <div class="config-section-body">
+                                    <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin-bottom:10px;text-transform:uppercase">Skill 技能</div>
+                                    <div class="skill-card selected"><div class="skill-icon">🔍</div><div class="skill-info"><div class="skill-name">课程搜索</div><div class="skill-desc">用户想查找/搜索课程</div></div><span class="skill-check">✓</span></div>
+                                    <div class="skill-card"><div class="skill-icon">📋</div><div class="skill-info"><div class="skill-name">学习计划生成</div><div class="skill-desc">用户想制定学习计划</div></div></div>
+                                    <div class="skill-add">+ 从 Skill 库添加技能</div>
+                                    <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin:14px 0 10px;text-transform:uppercase">MCP 工具</div>
+                                    <div class="mcp-card"><div class="mcp-header"><div class="mcp-name">🔌 课程查询API <span class="mcp-type">API代码</span></div><button class="btn-ghost danger" style="font-size:11px">移除</button></div><div class="mcp-desc">查询课程列表和详情</div></div>
+                                    <div class="skill-add">+ 从 MCP 库添加工具</div>
+                                </div>
+                            </div>
+                            <div class="config-section">
+                                <div class="config-section-header" onclick="toggleSection(this)"><div class="config-section-title">知识配置</div><span class="config-section-arrow">▼</span></div>
+                                <div class="config-section-body">
+                                    <div style="font-size:11px;color:var(--gray3);margin-bottom:10px;font-weight:600">支持单选/多选文件</div>
+                                    <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin-bottom:8px;text-transform:uppercase">📁 产品文档库</div>
+                                    <div class="knowledge-file selected"><span class="file-icon">📄</span><span class="file-name">产品需求文档v3.2.pdf</span><span class="file-check">✓</span></div>
+                                    <div class="knowledge-file"><span class="file-icon">📄</span><span class="file-name">API接口说明.docx</span></div>
+                                    <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin:10px 0 8px;text-transform:uppercase">📁 培训资料</div>
+                                    <div class="knowledge-file"><span class="file-icon">📄</span><span class="file-name">新员工培训手册.pdf</span></div>
+                                    <div class="knowledge-file"><span class="file-icon">📊</span><span class="file-name">课程评分数据.xlsx</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右列：提示词 -->
+                    <div class="col col-right">
+                        <div class="col-header">
+                            <div style="display:flex;gap:0"><div class="col-tab active" onclick="switchRightTab(this,'promptPanel')">角色提示词</div><div class="col-tab" onclick="switchRightTab(this,'skillPromptPanel')">技能指令</div></div>
+                            <div class="var-panel-wrapper">
+                                <button class="prompt-toolbar-btn" onclick="toggleVarPanel()" id="varPanelBtn">插入变量</button>
+                                <div class="var-panel" id="varPanel">
+                                    <div class="var-panel-search"><input id="varSearchInput" placeholder="搜索变量名..." oninput="filterVars(this.value)"></div>
+                                    <div class="var-panel-body" id="varPanelBody"></div>
+                                    <div class="var-panel-footer">
+                                        <div class="var-add-row">
+                                            <input class="var-add-input" id="varAddName" placeholder="变量名">
+                                            <input class="var-add-desc" id="varAddDesc" placeholder="说明">
+                                            <button class="var-add-btn" onclick="addCustomVar()">添加</button>
+                                        </div>
+                                        <div class="var-insert-hint">点击变量插入到光标处</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="prompt-editor" id="promptPanel">
+                            <div class="prompt-toolbar">
+                                <button class="prompt-toolbar-btn" style="font-weight:800">B</button>
+                                <button class="prompt-toolbar-btn" style="font-style:italic">I</button>
+                                <button class="prompt-toolbar-btn">代码</button>
+                                <span style="flex:1"></span>
+                                <span style="font-size:11px;color:var(--gray3);font-weight:600">Markdown</span>
+                            </div>
+                            <div class="prompt-area">
+                                <textarea class="prompt-textarea" id="promptText">## 角色定义
+你是一个专业的课程学习顾问，名为「EXE课小智」。你的核心职责是根据用户的学习需求、职业规划和兴趣方向，精准推荐高口碑的课程。
+
+## 核心能力
+1. **需求理解**：准确理解用户的学习方向和目标
+2. **课程匹配**：从课程库中筛选最匹配的课程
+3. **个性化推荐**：根据用户背景定制推荐方案
+
+## 行为规范
+- 始终以友好、专业的语气回复
+- 推荐课程时说明推荐理由
+- 如无法匹配，主动引导用户补充需求
+- 每次推荐 3-5 门课程
+
+## 输出格式
+推荐课程时使用以下格式：
+- 课程名称
+- 讲师信息
+- 推荐理由
+- 适合人群
+
+## 约束条件
+- 仅推荐课程库中存在的课程
+- 不编造不存在的课程信息
+- 价格信息以实际数据为准</textarea>
+                            </div>
+                            <div class="prompt-footer"><span>0 / 4000</span><span id="charCount">387 字符</span></div>
+                        </div>
+                        <div class="prompt-editor" id="skillPromptPanel" style="display:none">
+                            <div style="padding:16px;overflow-y:auto;flex:1">
+                                <div style="margin-bottom:16px"><div style="font-size:12px;font-weight:800;letter-spacing:1px;color:var(--red);margin-bottom:8px">课程搜索</div><textarea class="form-textarea" style="min-height:90px;font-size:13px">当用户表达查找/搜索课程的意图时，调用课程查询API获取课程列表，根据用户需求筛选匹配的课程，并以卡片形式展示推荐结果。</textarea></div>
+                                <div><div style="font-size:12px;font-weight:800;letter-spacing:1px;color:var(--red);margin-bottom:8px">学习计划生成</div><textarea class="form-textarea" style="min-height:90px;font-size:13px">当用户表达制定学习计划的意图时，根据用户的学习目标、时间安排和基础水平，生成个性化的学习计划。</textarea></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 技能库 -->
+            <div class="page" id="page-skill">
+                <div class="page-list">
+                    <div class="stats-row">
+                        <div class="stat-card"><div class="stat-label">技能总数</div><div class="stat-value">15</div></div>
+                        <div class="stat-card"><div class="stat-label">已启用</div><div class="stat-value green">12</div></div>
+                        <div class="stat-card"><div class="stat-label">关联Agent</div><div class="stat-value blue">28</div></div>
+                        <div class="stat-card"><div class="stat-label">MCP工具</div><div class="stat-value">9</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="toolbar">
+                                <input class="filter-input" placeholder="搜索技能...">
+                                <select class="filter-select"><option>全部状态</option><option>已启用</option><option>已停用</option></select>
+                            </div>
+                            <button class="btn btn-primary" onclick="showModal('skillModal');resetSkillModal()">+ 新增技能</button>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead><tr><th>技能名称</th><th>API Name</th><th>意图描述</th><th>创建人</th><th>创建时间</th><th>状态</th><th>操作</th></tr></thead>
+                                <tbody>
+                                    <tr><td style="font-weight:700">课程搜索</td><td>course-search</td><td>用户想查找/搜索课程</td><td>Admin</td><td>2024-09-15</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('skillModal')">编辑</button><button class="btn-ghost" onclick="showSkillRef('课程搜索')">引用关系</button><button class="btn-ghost danger" onclick="confirmDelete('技能 课程搜索')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">学习计划生成</td><td>study-plan</td><td>用户想制定学习计划</td><td>Admin</td><td>2024-09-12</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('skillModal')">编辑</button><button class="btn-ghost" onclick="showSkillRef('学习计划生成')">引用关系</button><button class="btn-ghost danger" onclick="confirmDelete('技能 学习计划生成')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">课程评价分析</td><td>course-review</td><td>用户想查看课程评价</td><td>张三</td><td>2024-09-10</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('skillModal')">编辑</button><button class="btn-ghost" onclick="showSkillRef('课程评价分析')">引用关系</button><button class="btn-ghost danger" onclick="confirmDelete('技能 课程评价分析')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">进度查询</td><td>progress-query</td><td>用户想查看学习进度</td><td>李四</td><td>2024-09-08</td><td><span class="status status-off">已停用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('skillModal')">编辑</button><button class="btn-ghost" onclick="showSkillRef('进度查询')">引用关系</button><button class="btn-ghost danger" onclick="confirmDelete('技能 进度查询')">删除</button></td></tr>
+                                </tbody>
+                            </table>
+                            <div class="pagination">
+                                <div class="page-btn">‹</div>
+                                <div class="page-btn active">1</div>
+                                <div class="page-btn">2</div>
+                                <div class="page-btn">›</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 插件库 -->
+            <div class="page" id="page-mcp">
+                <div class="page-list">
+                    <div class="stats-row">
+                        <div class="stat-card"><div class="stat-label">工具总数</div><div class="stat-value">9</div></div>
+                        <div class="stat-card"><div class="stat-label">已启用</div><div class="stat-value green">7</div></div>
+                        <div class="stat-card"><div class="stat-label">工作流</div><div class="stat-value blue">3</div></div>
+                        <div class="stat-card"><div class="stat-label">API代码</div><div class="stat-value">4</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="toolbar">
+                                <input class="filter-input" placeholder="搜索MCP工具...">
+                                <select class="filter-select"><option>全部类型</option><option>工作流</option><option>API代码</option><option>指定对象操作</option><option>提示词模版</option><option>知识库</option></select>
+                                <select class="filter-select"><option>全部状态</option><option>已启用</option><option>已停用</option></select>
+                            </div>
+                            <button class="btn btn-primary" onclick="showModal('mcpModal');resetMcpModal()">+ 新增工具</button>
+                        </div>
+                        <div class="card-body">
+                            <table>
+                                <thead><tr><th>工具名称</th><th>API Name</th><th>类型</th><th>描述</th><th>创建人</th><th>状态</th><th>操作</th></tr></thead>
+                                <tbody>
+                                    <tr><td style="font-weight:700">课程查询API</td><td>course-api</td><td><span class="tag tag-blue">API代码</span></td><td>查询课程列表和详情</td><td>Admin</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('mcpModal')">编辑</button><button class="btn-ghost" onclick="showMcpRef('课程查询API')">引用关系</button><button class="btn-ghost danger" onclick="confirmDelete('工具 课程查询API')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">用户画像查询</td><td>user-profile</td><td><span class="tag tag-red">工作流</span></td><td>获取用户学习画像数据</td><td>Admin</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('mcpModal')">编辑</button><button class="btn-ghost" onclick="showMcpRef('用户画像查询')">引用关系</button><button class="btn-ghost danger" onclick="confirmDelete('工具 用户画像查询')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">学习记录同步</td><td>study-sync</td><td><span class="tag tag-green">指定对象</span></td><td>同步用户学习记录</td><td>张三</td><td><span class="status status-on">已启用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('mcpModal')">编辑</button><button class="btn-ghost" onclick="showMcpRef('学习记录同步')">引用关系</button><button class="btn-ghost danger" onclick="confirmDelete('工具 学习记录同步')">删除</button></td></tr>
+                                    <tr><td style="font-weight:700">课程推荐模板</td><td>rec-template</td><td><span class="tag tag-blue">提示词模版</span></td><td>课程推荐提示词模板</td><td>李四</td><td><span class="status status-off">已停用</span></td><td class="td-actions"><button class="btn-ghost" onclick="showModal('mcpModal')">编辑</button><button class="btn-ghost" onclick="showMcpRef('课程推荐模板')">引用关系</button><button class="btn-ghost danger" onclick="confirmDelete('工具 课程推荐模板')">删除</button></td></tr>
+                                </tbody>
+                            </table>
+                            <div class="pagination">
+                                <div class="page-btn">‹</div>
+                                <div class="page-btn active">1</div>
+                                <div class="page-btn">›</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模型配置弹窗 -->
+    <div class="modal-overlay" id="modelModal">
+        <div class="modal">
+            <div class="modal-header"><h3>新增<span>模型</span></h3><div class="modal-close" onclick="hideModal('modelModal')">✕</div></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">模型名称<span class="req">*</span></label><input class="form-input" placeholder="请输入模型名称"></div>
+                <div class="form-group"><label class="form-label">API Name<span class="req">*</span></label><input class="form-input" placeholder="唯一标识，如 gpt-4o"></div>
+                <div class="form-group"><label class="form-label">详细描述</label><textarea class="form-textarea" placeholder="描述模型能力和适用场景"></textarea></div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">模型厂商</label><select class="form-select"><option>系统自带</option><option>自定义配置</option></select></div>
+                    <div class="form-group"><label class="form-label">模型版本</label><select class="form-select"><option>v2024-08</option><option>v2024-06</option><option>v2024-05</option></select></div>
+                </div>
+                <div class="form-group"><label class="form-label">API Key</label><input class="form-input" type="password" placeholder="加密存储，仅显示掩码"></div>
+                <div class="form-group"><label class="form-label">访问令牌</label><input class="form-input" type="password" placeholder="加密存储，仅显示掩码"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="hideModal('modelModal')">取消</button><button class="btn btn-primary" onclick="hideModal('modelModal');showToast('模型创建成功！')">确认创建</button></div>
+        </div>
+    </div>
+
+    <!-- 知识库配置弹窗 -->
+    <div class="modal-overlay" id="knowledgeModal">
+        <div class="modal wide">
+            <div class="modal-header"><h3>新建<span>知识库</span></h3><div class="modal-close" onclick="hideModal('knowledgeModal')">✕</div></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">知识库名称<span class="req">*</span></label><input class="form-input" placeholder="请输入知识库名称"></div>
+                <div class="form-group"><label class="form-label">描述</label><input class="form-input" placeholder="简要描述知识库内容"></div>
+                <div class="form-group"><label class="form-label">上传文件</label>
+                    <div class="upload-area" onclick="document.getElementById('kbModalUpload').click()">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">拖拽文件到此处，或 <span>点击上传</span></div>
+                        <div style="font-size:12px;color:var(--gray3);margin-top:8px;font-weight:500">支持 PDF、DOCX、MD、TXT、XLSX、PNG 格式，单文件不超过 10MB</div>
+                    </div>
+                    <input type="file" id="kbModalUpload" multiple accept=".pdf,.docx,.md,.txt,.xlsx,.png,.jpg" style="display:none" onchange="handleKbModalUpload(this.files)">
+                    <div id="kbModalUploadList" style="margin-top:12px"></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="hideModal('knowledgeModal')">取消</button><button class="btn btn-primary" onclick="hideModal('knowledgeModal');showToast('知识库创建成功！')">确认创建</button></div>
+        </div>
+    </div>
+
+    <!-- 知识库文件夹操作弹窗 -->
+    <div class="kb-folder-dialog" id="kbFolderDialog">
+        <div class="kb-folder-dialog-box">
+            <div class="kb-folder-dialog-title" id="kbFolderDialogTitle">新建<span>文件夹</span></div>
+            <div class="form-group"><label class="form-label">文件夹名称<span class="req">*</span></label><input class="form-input" id="kbFolderNameInput" placeholder="请输入文件夹名称"></div>
+            <div class="form-hint" id="kbFolderHint">名称仅支持中文、英文、数字、下划线，不可包含特殊字符</div>
+            <div class="kb-folder-dialog-actions">
+                <button class="btn btn-outline" onclick="hideKbFolderDialog()">取消</button>
+                <button class="btn btn-primary" onclick="confirmKbFolderAction()">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 知识库移动弹窗 -->
+    <div class="kb-move-dialog" id="kbMoveDialog">
+        <div class="kb-move-dialog-box">
+            <div class="kb-move-dialog-title">移动到<span>目标文件夹</span></div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px;color:var(--gray3)">选择目标路径：</div>
+            <div class="kb-move-tree" id="kbMoveTree">
+                <div class="kb-tree-node">
+                    <div class="kb-tree-row" onclick="selectMoveTarget(this,'全部文件')"><span class="kb-tree-arrow expanded">▶</span><span class="kb-tree-icon">📂</span><span class="kb-tree-label">全部文件</span></div>
+                    <div class="kb-tree-children">
+                        <div class="kb-tree-row" onclick="selectMoveTarget(this,'产品文档库')"><span class="kb-tree-arrow hidden">▶</span><span class="kb-tree-icon">📁</span><span class="kb-tree-label">产品文档库</span></div>
+                        <div class="kb-tree-row" onclick="selectMoveTarget(this,'培训资料')"><span class="kb-tree-arrow hidden">▶</span><span class="kb-tree-icon">📁</span><span class="kb-tree-label">培训资料</span></div>
+                        <div class="kb-tree-row" onclick="selectMoveTarget(this,'接口文档')"><span class="kb-tree-arrow hidden">▶</span><span class="kb-tree-icon">📁</span><span class="kb-tree-label">接口文档</span></div>
+                        <div class="kb-tree-row" onclick="selectMoveTarget(this,'课程数据')"><span class="kb-tree-arrow hidden">▶</span><span class="kb-tree-icon">📁</span><span class="kb-tree-label">课程数据</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="kb-move-dialog-actions">
+                <button class="btn btn-outline" onclick="hideKbMoveDialog()">取消</button>
+                <button class="btn btn-primary" onclick="confirmKbMove()">确认移动</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示词配置弹窗 -->
+    <div class="modal-overlay" id="promptModal">
+        <div class="modal wide">
+            <div class="modal-header"><h3>新增<span>提示词</span></h3><div class="modal-close" onclick="hideModal('promptModal')">✕</div></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">提示词名称<span class="req">*</span></label><input class="form-input" placeholder="请输入提示词名称"></div>
+                <div class="form-row">
+                    <div class="form-group"><label class="form-label">场景分类</label><select class="form-select"><option>课程推荐</option><option>学习规划</option><option>知识问答</option><option>数据分析</option><option>内容生成</option></select></div>
+                    <div class="form-group"><label class="form-label">版本号</label><input class="form-input" value="v1.0"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">提示词内容<span class="req">*</span>
+                        <div class="var-panel-wrapper" style="float:right">
+                            <button class="prompt-toolbar-btn" style="border:2px solid var(--gray2);border-radius:8px;padding:4px 12px;font-size:12px;font-weight:700" onclick="togglePromptVarPanel()" id="promptVarPanelBtn">插入变量</button>
+                            <div class="var-panel" id="promptVarPanel" style="width:340px">
+                                <div class="var-panel-search"><input id="promptVarSearchInput" placeholder="搜索变量名..." oninput="filterPromptVars(this.value)"></div>
+                                <div class="var-panel-body" id="promptVarPanelBody"></div>
+                                <div class="var-panel-footer">
+                                    <div class="var-add-row">
+                                        <input class="var-add-input" id="promptVarAddName" placeholder="变量名">
+                                        <input class="var-add-desc" id="promptVarAddDesc" placeholder="说明">
+                                        <button class="var-add-btn" onclick="addPromptCustomVar()">添加</button>
+                                    </div>
+                                    <div class="var-insert-hint">点击变量插入到光标处</div>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                    <textarea class="form-textarea" id="promptModalText" style="min-height:180px" placeholder="请输入提示词内容，支持 Markdown 格式，可使用 ${变量名} 插入动态变量..."></textarea>
+                    <div class="form-hint">支持 Markdown 格式 · 使用 ${变量名} 插入运行时动态变量</div>
+                </div>
+                <div class="form-group"><label class="form-label">备注说明</label><input class="form-input" placeholder="版本变更说明"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="hideModal('promptModal')">取消</button><button class="btn btn-primary" onclick="hideModal('promptModal');showToast('提示词创建成功！')">确认创建</button></div>
+        </div>
+    </div>
+
+    <!-- Agent创建弹窗 - 两步式 -->
+    <div class="modal-overlay" id="agentCreateModal">
+        <div class="modal wide">
+            <div class="modal-header"><h3>创建 <span>Agent</span></h3><div class="modal-close" onclick="hideModal('agentCreateModal')">✕</div></div>
+            <div class="step-indicator" id="stepIndicator">
+                <div class="step-dot active"></div>
+                <div class="step-dot"></div>
+            </div>
+            <!-- Step 1: 模板选择 -->
+            <div class="modal-body" id="agentStep1">
+                <div style="font-size:14px;font-weight:800;margin-bottom:16px;letter-spacing:0.5px">选择创建方式</div>
+                <div class="template-options">
+                    <div class="template-card selected" onclick="selectTemplate(this,'blank')">
+                        <div class="template-icon">✨</div>
+                        <div class="template-title">空白模板</div>
+                        <div class="template-desc">从零开始创建全新Agent</div>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate(this,'existing')">
+                        <div class="template-icon">📋</div>
+                        <div class="template-title">已有Agent</div>
+                        <div class="template-desc">从现有Agent复制快速创建</div>
+                    </div>
+                </div>
+                <div id="existingAgentList" style="display:none;margin-top:16px">
+                    <div style="font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin-bottom:10px;text-transform:uppercase">选择已有Agent</div>
+                    <div class="agent-list-select">
+                        <div class="agent-list-item selected" onclick="selectAgentItem(this)">课程推荐Agent</div>
+                        <div class="agent-list-item" onclick="selectAgentItem(this)">学习规划Agent</div>
+                        <div class="agent-list-item" onclick="selectAgentItem(this)">客服问答Agent</div>
+                        <div class="agent-list-item" onclick="selectAgentItem(this)">数据分析Agent</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Step 2: 详细配置 -->
+            <div class="modal-body" id="agentStep2" style="display:none">
+                <div class="tab-nav" id="agentConfigTabs">
+                    <button class="tab-btn active" onclick="switchAgentTab(this,0)">基本信息</button>
+                    <button class="tab-btn" onclick="switchAgentTab(this,1)">模型信息</button>
+                    <button class="tab-btn" onclick="switchAgentTab(this,2)">初始化信息</button>
+                    <button class="tab-btn" onclick="switchAgentTab(this,3)">技能配置</button>
+                    <button class="tab-btn" onclick="switchAgentTab(this,4)">知识配置</button>
+                </div>
+                <!-- Tab 0: 基本信息 -->
+                <div class="tab-content active" id="agentTab0">
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">名称<span class="req">*</span></label><input class="form-input" placeholder="请输入Agent名称"></div>
+                        <div class="form-group"><label class="form-label">API Name<span class="req">*</span></label><input class="form-input" placeholder="系统自动生成或手动填写"></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">头像</label><div class="avatar-upload">+</div></div>
+                    <div class="form-group"><label class="form-label">角色描述</label><textarea class="form-textarea" placeholder="AI角色提示词，描述Agent的角色定位..."></textarea></div>
+                    <div class="form-group"><label class="form-label">工作内容说明</label><textarea class="form-textarea" placeholder="详细描述AI的功能和职责..."></textarea></div>
+                    <div class="form-group"><label class="form-label">类型标签（多选）</label><div class="tag-input"><input placeholder="输入后回车添加"></div><div class="form-hint">仅匹配对应标签的Agent可被AI助理封装，不同标签对应不同业务场景</div></div>
+                    <div class="form-group"><label class="form-label">开放对象</label><select class="form-select"><option>全员</option><option>指定部门</option><option>指定人员</option></select></div>
+                </div>
+                <!-- Tab 1: 模型信息 -->
+                <div class="tab-content" id="agentTab1">
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">模型厂商</label><select class="form-select"><option>系统自带</option><option>自定义配置</option></select></div>
+                        <div class="form-group"><label class="form-label">模型选择</label><select class="form-select"><option>GPT-4o</option><option>GLM-4</option><option>文心一言4.0</option><option>DeepSeek-V2</option></select></div>
+                    </div>
+                </div>
+                <!-- Tab 2: 初始化信息 -->
+                <div class="tab-content" id="agentTab2">
+                    <div class="form-group"><label class="form-label">欢迎语标题</label><input class="form-input" placeholder="请输入欢迎语标题"></div>
+                    <div class="form-group"><label class="form-label">欢迎语内容</label><textarea class="form-textarea" placeholder="支持富文本..."></textarea></div>
+                    <div class="form-group"><label class="form-label">推荐问题（最多5条，每条不超过50字）</label>
+                        <div class="quick-q-list" id="modalQuickQList">
+                            <div class="quick-q-row"><input class="form-input" placeholder="请输入推荐问题"><button class="btn-ghost danger" style="font-size:11px" onclick="this.parentElement.remove()">删除</button></div>
+                        </div>
+                        <div class="quick-q-add" onclick="addModalQuickQ()">+ 添加推荐问题</div>
+                    </div>
+                </div>
+                <!-- Tab 3: 技能配置 -->
+                <div class="tab-content" id="agentTab3">
+                    <div style="font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin-bottom:12px;text-transform:uppercase">从 Skill 库选择技能</div>
+                    <div class="skill-card selected"><div class="skill-icon">🔍</div><div class="skill-info"><div class="skill-name">课程搜索</div><div class="skill-desc">用户想查找/搜索课程</div></div><span class="skill-check">✓</span></div>
+                    <div class="skill-card"><div class="skill-icon">📋</div><div class="skill-info"><div class="skill-name">学习计划生成</div><div class="skill-desc">用户想制定学习计划</div></div></div>
+                    <div class="skill-card"><div class="skill-icon">📊</div><div class="skill-info"><div class="skill-name">课程评价分析</div><div class="skill-desc">用户想查看课程评价</div></div></div>
+                    <div style="font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin:16px 0 12px;text-transform:uppercase">从 MCP 库选择工具</div>
+                    <div class="mcp-card"><div class="mcp-header"><div class="mcp-name">🔌 课程查询API <span class="mcp-type">API代码</span></div><button class="btn-ghost" style="font-size:11px">绑定</button></div><div class="mcp-desc">查询课程列表和详情</div></div>
+                    <div class="mcp-card"><div class="mcp-header"><div class="mcp-name">🔄 用户画像查询 <span class="mcp-type" style="background:var(--red)">工作流</span></div><button class="btn-ghost" style="font-size:11px">绑定</button></div><div class="mcp-desc">获取用户学习画像数据</div></div>
+                </div>
+                <!-- Tab 4: 知识配置 -->
+                <div class="tab-content" id="agentTab4">
+                    <div style="font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin-bottom:12px;text-transform:uppercase">选择知识库文件</div>
+                    <div style="font-size:11px;color:var(--gray3);margin-bottom:10px;font-weight:600">支持单选/多选文件</div>
+                    <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin-bottom:8px;text-transform:uppercase">📁 产品文档库</div>
+                    <div class="knowledge-file"><span class="file-icon">📄</span><span class="file-name">产品需求文档v3.2.pdf</span></div>
+                    <div class="knowledge-file"><span class="file-icon">📄</span><span class="file-name">API接口说明.docx</span></div>
+                    <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin:10px 0 8px;text-transform:uppercase">📁 培训资料</div>
+                    <div class="knowledge-file"><span class="file-icon">📄</span><span class="file-name">新员工培训手册.pdf</span></div>
+                    <div class="knowledge-file"><span class="file-icon">📊</span><span class="file-name">课程评分数据.xlsx</span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="agentStep1Back" style="display:none" onclick="agentGoStep(1)">上一步</button>
+                <button class="btn btn-outline" onclick="hideModal('agentCreateModal')">取消</button>
+                <button class="btn btn-primary" id="agentStep1Next" onclick="agentGoStep(2)">下一步</button>
+                <button class="btn btn-primary" id="agentStep2Create" style="display:none" onclick="hideModal('agentCreateModal');showToast('Agent创建成功！')">确认创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skill创建弹窗 - 三步式 -->
+    <div class="modal-overlay" id="skillModal">
+        <div class="modal wide">
+            <div class="modal-header"><h3>新增 <span>Skill</span></h3><div class="modal-close" onclick="hideModal('skillModal')">✕</div></div>
+            <div class="step-indicator" id="skillStepIndicator">
+                <div class="step-dot active"></div>
+                <div class="step-dot"></div>
+                <div class="step-dot"></div>
+            </div>
+            <div class="modal-body" id="skillStep1">
+                <div style="font-size:14px;font-weight:800;margin-bottom:16px;letter-spacing:0.5px">步骤1：基本信息</div>
+                <div class="form-group"><label class="form-label">技能名称<span class="req">*</span></label><input class="form-input" placeholder="请输入技能名称"></div>
+                <div class="form-group"><label class="form-label">API Name<span class="req">*</span></label><input class="form-input" placeholder="唯一标识"></div>
+                <div class="form-group"><label class="form-label">意图描述<span class="req">*</span></label><textarea class="form-textarea" placeholder="详细描述触发该技能的用户意图"></textarea></div>
+                <div class="form-group"><label class="form-label">操作对象</label><input class="form-input" placeholder="指定技能操作的目标对象"></div>
+            </div>
+            <div class="modal-body" id="skillStep2" style="display:none">
+                <div style="font-size:14px;font-weight:800;margin-bottom:16px;letter-spacing:0.5px">步骤2：操作配置</div>
+                <div style="font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin-bottom:12px;text-transform:uppercase">绑定工具</div>
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox"> Agent工具</label>
+                    <label class="checkbox-item"><input type="checkbox"> API插件</label>
+                    <label class="checkbox-item"><input type="checkbox"> MCP工具</label>
+                </div>
+                <div style="margin-top:16px">
+                    <div style="font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--gray3);margin-bottom:10px;text-transform:uppercase">可用工具列表</div>
+                    <div class="skill-card selected"><div class="skill-icon">🔌</div><div class="skill-info"><div class="skill-name">课程查询API</div><div class="skill-desc">API插件 · 查询课程列表</div></div><span class="skill-check">✓</span></div>
+                    <div class="skill-card"><div class="skill-icon">🔄</div><div class="skill-info"><div class="skill-name">用户画像查询</div><div class="skill-desc">MCP工具 · 获取用户数据</div></div></div>
+                </div>
+            </div>
+            <div class="modal-body" id="skillStep3" style="display:none">
+                <div style="font-size:14px;font-weight:800;margin-bottom:16px;letter-spacing:0.5px">步骤3：技能指令配置</div>
+                <div class="form-group"><label class="form-label">指令内容<span class="req">*</span></label><textarea class="form-textarea" style="min-height:200px" placeholder="详细描述该技能在指定场景下需调用/执行的具体动作..."></textarea></div>
+                <div class="form-hint">支持 Markdown 格式，可使用 {{变量名}} 插入动态变量</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="skillPrevBtn" style="display:none" onclick="skillGoStep(-1)">上一步</button>
+                <button class="btn btn-outline" onclick="hideModal('skillModal')">取消</button>
+                <button class="btn btn-primary" id="skillNextBtn" onclick="skillGoStep(1)">下一步</button>
+                <button class="btn btn-primary" id="skillCreateBtn" style="display:none" onclick="hideModal('skillModal');showToast('技能创建成功！')">确认创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MCP创建弹窗 -->
+    <div class="modal-overlay" id="mcpModal">
+        <div class="modal wide">
+            <div class="modal-header"><h3>新增 <span>MCP工具</span></h3><div class="modal-close" onclick="hideModal('mcpModal')">✕</div></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">工具名称<span class="req">*</span></label><input class="form-input" placeholder="请输入工具名称"></div>
+                <div class="form-group"><label class="form-label">API Name<span class="req">*</span></label><input class="form-input" placeholder="唯一标识"></div>
+                <div class="form-group"><label class="form-label">描述</label><textarea class="form-textarea" placeholder="描述工具功能"></textarea></div>
+                <div class="form-group"><label class="form-label">工具类型<span class="req">*</span></label>
+                    <select class="form-select" onchange="toggleMcpType(this.value)">
+                        <option value="">请选择类型</option>
+                        <option value="workflow">工作流</option>
+                        <option value="api">API代码</option>
+                        <option value="object">指定对象操作</option>
+                        <option value="prompt">提示词模版</option>
+                        <option value="knowledge">知识库</option>
+                    </select>
+                </div>
+                <div id="mcpWorkflow" style="display:none">
+                    <div class="form-group"><label class="form-label">工作流设计</label><div class="upload-area" style="padding:30px"><div class="upload-icon">🔄</div><div class="upload-text">可视化流程设计器</div><div style="font-size:12px;color:var(--gray3);margin-top:6px;font-weight:500">点击进入流程设计界面</div></div></div>
+                </div>
+                <div id="mcpApi" style="display:none">
+                    <div class="form-group"><label class="form-label">API代码</label><textarea class="form-textarea" style="min-height:150px;font-family:monospace" placeholder="// 请输入API代码
+function main(params) {
+  // 处理逻辑
+  return result;
+}"></textarea></div>
+                    <div class="form-row"><div class="form-group"><label class="form-label">请求方式</label><select class="form-select"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select></div><div class="form-group"><label class="form-label">API地址</label><input class="form-input" placeholder="https://api.example.com/..."></div></div>
+                </div>
+                <div id="mcpObject" style="display:none">
+                    <div class="form-group"><label class="form-label">操作对象<span class="req">*</span></label>
+                        <div class="form-hint" style="margin-bottom:10px;margin-top:0">选择该工具需要操作的业务对象，可多选</div>
+                        <div class="obj-select-group">
+                            <div class="obj-category">
+                                <div class="obj-category-title">课程相关</div>
+                                <div class="obj-options">
+                                    <label class="obj-option"><input type="checkbox" name="mcpObj" value="课程内容"><span class="obj-option-check"></span><span class="obj-option-icon">📖</span><span class="obj-option-label">课程内容</span><span class="obj-option-desc">课程详情、章节、课件</span></label>
+                                    <label class="obj-option"><input type="checkbox" name="mcpObj" value="课程管理"><span class="obj-option-check"></span><span class="obj-option-icon">⚙️</span><span class="obj-option-label">课程管理</span><span class="obj-option-desc">课程创建、发布、上下架</span></label>
+                                    <label class="obj-option"><input type="checkbox" name="mcpObj" value="课程标签"><span class="obj-option-check"></span><span class="obj-option-icon">🏷️</span><span class="obj-option-label">课程标签</span><span class="obj-option-desc">标签分类、标签关联</span></label>
+                                    <label class="obj-option"><input type="checkbox" name="mcpObj" value="项目地图安排"><span class="obj-option-check"></span><span class="obj-option-icon">🗺️</span><span class="obj-option-label">项目地图安排</span><span class="obj-option-desc">学习路径、课程规划</span></label>
+                                </div>
+                            </div>
+                            <div class="obj-category">
+                                <div class="obj-category-title">用户相关</div>
+                                <div class="obj-options">
+                                    <label class="obj-option"><input type="checkbox" name="mcpObj" value="用户"><span class="obj-option-check"></span><span class="obj-option-icon">👤</span><span class="obj-option-label">用户</span><span class="obj-option-desc">用户信息、权限管理</span></label>
+                                    <label class="obj-option"><input type="checkbox" name="mcpObj" value="学习记录"><span class="obj-option-check"></span><span class="obj-option-icon">📝</span><span class="obj-option-label">学习记录</span><span class="obj-option-desc">学习进度、完成状态</span></label>
+                                    <label class="obj-option"><input type="checkbox" name="mcpObj" value="订单"><span class="obj-option-check"></span><span class="obj-option-icon">🛒</span><span class="obj-option-label">订单</span><span class="obj-option-desc">订单查询、支付状态</span></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="obj-selected" id="objSelectedBar" style="display:none">
+                            <span class="obj-selected-label">已选择：</span>
+                            <div class="obj-selected-tags" id="objSelectedTags"></div>
+                        </div>
+                    </div>
+                    <div class="form-group"><label class="form-label">操作类型</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-item"><input type="checkbox"> 查询</label>
+                            <label class="checkbox-item"><input type="checkbox"> 新增</label>
+                            <label class="checkbox-item"><input type="checkbox"> 修改</label>
+                            <label class="checkbox-item"><input type="checkbox"> 删除</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="mcpPrompt" style="display:none">
+                    <div class="form-group"><label class="form-label">提示词模版内容</label><textarea class="form-textarea" style="min-height:150px" placeholder="请输入可复用的提示词模板内容..."></textarea></div>
+                </div>
+                <div id="mcpKnowledge" style="display:none">
+                    <div class="form-group"><label class="form-label">关联知识库</label>
+                        <div class="knowledge-file selected"><span class="file-icon">📁</span><span class="file-name">产品文档库</span><span class="file-check">✓</span></div>
+                        <div class="knowledge-file"><span class="file-icon">📁</span><span class="file-name">培训资料</span></div>
+                        <div class="knowledge-file"><span class="file-icon">📁</span><span class="file-name">课程数据</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline" onclick="hideModal('mcpModal')">取消</button><button class="btn btn-primary" onclick="hideModal('mcpModal');showToast('MCP工具创建成功！')">确认创建</button></div>
+        </div>
+    </div>
+
+    <!-- 确认删除弹窗 -->
+    <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+            <div class="confirm-icon">⚠️</div>
+            <div class="confirm-title" id="confirmTitle">确认删除？</div>
+            <div class="confirm-desc" id="confirmDesc">此操作不可撤销，请确认是否继续。</div>
+            <div class="confirm-actions">
+                <button class="btn btn-outline" onclick="hideConfirm()">取消</button>
+                <button class="btn btn-primary" onclick="hideConfirm();showToast('删除成功！')">确认删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast toast-success" id="toastSuccess">✓ <span id="toastText"></span></div>
+
+    <!-- 引用关系弹窗 -->
+    <div class="ref-dialog" id="refDialog">
+        <div class="ref-dialog-box">
+            <div class="ref-dialog-header">
+                <h3 id="refDialogTitle">引用<span>关系</span></h3>
+                <div class="ref-dialog-close" onclick="hideRefDialog()">✕</div>
+            </div>
+            <div class="ref-dialog-body" id="refDialogBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const titleMap = { model: '模型<span>配置</span>', knowledge: '知识库<span>配置</span>', prompt: '提示词<span>配置</span>', agent: 'Agent<span>中心</span>', skill: '技能<span>库</span>', mcp: '插件<span>库</span>' };
+
+        function switchPage(page, el) {
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            if (el) el.classList.add('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById('page-' + page);
+            if (target) target.classList.add('active');
+            document.getElementById('topbarTitle').innerHTML = titleMap[page] || '';
+        }
+
+        function showModal(id) { document.getElementById(id).classList.add('show'); }
+        function hideModal(id) { document.getElementById(id).classList.remove('show'); }
+
+        function toggleStatus(btn) {
+            const td = btn.closest('tr').querySelector('.status');
+            if (td.classList.contains('status-on')) { td.classList.remove('status-on'); td.classList.add('status-off'); td.textContent = '已停用'; btn.textContent = '启用'; }
+            else { td.classList.remove('status-off'); td.classList.add('status-on'); td.textContent = '已启用'; btn.textContent = '停用'; }
+        }
+
+        function confirmDelete(name) {
+            document.getElementById('confirmTitle').textContent = '确认删除？';
+            document.getElementById('confirmDesc').textContent = '确定要删除「' + name + '」吗？此操作不可撤销。';
+            document.getElementById('confirmOverlay').classList.add('show');
+        }
+        function hideConfirm() { document.getElementById('confirmOverlay').classList.remove('show'); }
+
+        // ===== 引用关系 =====
+        const skillRefData = {
+            '课程搜索': [
+                { name: '课程推荐Agent', desc: '智能推荐课程，匹配学习需求', status: 'on' },
+                { name: '客服问答Agent', desc: '智能客服，解答用户疑问', status: 'on' },
+                { name: '产品问答Agent', desc: '产品知识智能问答', status: 'on' },
+            ],
+            '学习计划生成': [
+                { name: '学习规划Agent', desc: '制定个性化学习计划', status: 'on' },
+                { name: '培训管理Agent', desc: '培训计划与进度管理', status: 'off' },
+            ],
+            '课程评价分析': [
+                { name: '课程推荐Agent', desc: '智能推荐课程，匹配学习需求', status: 'on' },
+                { name: '数据分析Agent', desc: '业务数据智能分析', status: 'off' },
+            ],
+            '进度查询': [
+                { name: '学习规划Agent', desc: '制定个性化学习计划', status: 'on' },
+            ],
+        };
+
+        const mcpRefData = {
+            '课程查询API': [
+                { name: '课程搜索', desc: '用户想查找/搜索课程', status: 'on' },
+                { name: '课程评价分析', desc: '用户想查看课程评价', status: 'on' },
+            ],
+            '用户画像查询': [
+                { name: '课程搜索', desc: '用户想查找/搜索课程', status: 'on' },
+                { name: '学习计划生成', desc: '用户想制定学习计划', status: 'on' },
+            ],
+            '学习记录同步': [
+                { name: '进度查询', desc: '用户想查看学习进度', status: 'off' },
+                { name: '学习计划生成', desc: '用户想制定学习计划', status: 'on' },
+            ],
+            '课程推荐模板': [
+                { name: '课程搜索', desc: '用户想查找/搜索课程', status: 'on' },
+            ],
+        };
+
+        function showSkillRef(skillName) {
+            const title = document.getElementById('refDialogTitle');
+            const body = document.getElementById('refDialogBody');
+            title.innerHTML = '「<span>' + skillName + '</span>」引用关系';
+            const refs = skillRefData[skillName] || [];
+            if (refs.length === 0) {
+                body.innerHTML = '<div class="ref-empty">该技能暂未被任何Agent调用</div>';
+            } else {
+                body.innerHTML = '<div class="ref-dialog-subtitle">被以下 Agent 调用（共 ' + refs.length + ' 个）</div>' +
+                    refs.map(r => '<div class="ref-item"><div class="ref-item-icon agent">🤖</div><div class="ref-item-info"><div class="ref-item-name">' + r.name + '</div><div class="ref-item-desc">' + r.desc + '</div></div><span class="ref-item-badge ' + r.status + '">' + (r.status === 'on' ? '已启用' : '已停用') + '</span></div>').join('');
+            }
+            document.getElementById('refDialog').classList.add('show');
+        }
+
+        function showMcpRef(mcpName) {
+            const title = document.getElementById('refDialogTitle');
+            const body = document.getElementById('refDialogBody');
+            title.innerHTML = '「<span>' + mcpName + '</span>」引用关系';
+            const refs = mcpRefData[mcpName] || [];
+            if (refs.length === 0) {
+                body.innerHTML = '<div class="ref-empty">该工具暂未被任何Skill调用</div>';
+            } else {
+                body.innerHTML = '<div class="ref-dialog-subtitle">被以下 Skill 调用（共 ' + refs.length + ' 个）</div>' +
+                    refs.map(r => '<div class="ref-item"><div class="ref-item-icon skill">⚡</div><div class="ref-item-info"><div class="ref-item-name">' + r.name + '</div><div class="ref-item-desc">' + r.desc + '</div></div><span class="ref-item-badge ' + r.status + '">' + (r.status === 'on' ? '已启用' : '已停用') + '</span></div>').join('');
+            }
+            document.getElementById('refDialog').classList.add('show');
+        }
+
+        function hideRefDialog() { document.getElementById('refDialog').classList.remove('show'); }
+
+        function showToast(msg) {
+            const t = document.getElementById('toastSuccess');
+            document.getElementById('toastText').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
+        }
+
+        function toggleSection(header) { header.parentElement.classList.toggle('collapsed'); }
+
+        function openWorkspace(name) {
+            document.getElementById('workspaceName').textContent = name;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-agent-workspace').classList.add('active');
+        }
+
+        // ===== Agent中心卡片渲染 =====
+        const agentData = [
+            { id: 1, name: '课程推荐Agent', desc: '智能推荐课程，匹配学习需求', type: '培训', model: 'GPT-4o', skills: 3, knowledge: 5, status: 'on', time: '2024-09-15', icon: 'red' },
+            { id: 2, name: '学习规划Agent', desc: '制定个性化学习计划', type: '培训', model: 'GLM-4', skills: 2, knowledge: 3, status: 'on', time: '2024-09-12', icon: 'blue' },
+            { id: 3, name: '客服问答Agent', desc: '智能客服，解答用户疑问', type: '客服', model: '文心一言4.0', skills: 4, knowledge: 8, status: 'on', time: '2024-09-10', icon: 'green' },
+            { id: 4, name: '数据分析Agent', desc: '业务数据智能分析', type: '运营', model: 'DeepSeek-V2', skills: 2, knowledge: 2, status: 'off', time: '2024-09-08', icon: 'orange' },
+            { id: 5, name: '销售助手Agent', desc: '销售线索跟进与转化', type: '销售', model: 'GPT-4o', skills: 5, knowledge: 6, status: 'on', time: '2024-09-05', icon: 'purple' },
+            { id: 6, name: '产品问答Agent', desc: '产品知识智能问答', type: '客服', model: 'GLM-4', skills: 3, knowledge: 4, status: 'on', time: '2024-09-03', icon: 'dark' },
+            { id: 7, name: '培训管理Agent', desc: '培训计划与进度管理', type: '培训', model: '文心一言4.0', skills: 2, knowledge: 3, status: 'off', time: '2024-08-28', icon: 'blue' },
+            { id: 8, name: '运营监控Agent', desc: '运营数据实时监控', type: '运营', model: 'DeepSeek-V2', skills: 4, knowledge: 5, status: 'on', time: '2024-08-25', icon: 'red' },
+            { id: 9, name: '客户服务Agent', desc: '客户问题智能处理', type: '客服', model: 'GPT-4o', skills: 6, knowledge: 10, status: 'on', time: '2024-08-20', icon: 'green' },
+        ];
+        let agentCurrentPage = 1;
+        const agentPageSize = 6;
+        let selectedAgents = [];
+
+        function renderAgentCards() {
+            const grid = document.getElementById('agentCardGrid');
+            const empty = document.getElementById('agentEmpty');
+            const pagination = document.getElementById('agentPagination');
+            const filtered = getFilteredAgents();
+            const start = (agentCurrentPage - 1) * agentPageSize;
+            const paged = filtered.slice(start, start + agentPageSize);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                empty.style.display = 'block';
+                pagination.innerHTML = '';
+                return;
+            }
+            empty.style.display = 'none';
+
+            grid.innerHTML = paged.map(a => {
+                const isSelected = selectedAgents.includes(a.id);
+                const toggleLabel = a.status === 'on' ? '停用' : '启用';
+                const toggleClass = a.status === 'on' ? 'btn-ghost danger' : 'btn-ghost';
+                return '<div class="agent-card' + (isSelected ? ' selected' : '') + '" onclick="agentCardClick(event,' + a.id + ',\'' + a.name.replace(/'/g, "\\'") + '\')">' +
+                    '<div class="agent-card-select" onclick="event.stopPropagation();toggleAgentSelect(' + a.id + ')">' + (isSelected ? '✓' : '') + '</div>' +
+                    '<div class="agent-card-status"><span class="status status-' + a.status + '">' + (a.status === 'on' ? '已启用' : '已停用') + '</span></div>' +
+                    '<div class="agent-card-header">' +
+                        '<div class="agent-card-icon ' + a.icon + '">🤖</div>' +
+                        '<div class="agent-card-info">' +
+                            '<div class="agent-card-name">' + truncateText(a.name, 16) + '</div>' +
+                            '<div class="agent-card-desc">' + truncateText(a.desc || '暂无描述', 32) + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="agent-card-tags"><span class="tag tag-' + getTypeTagClass(a.type) + '">' + a.type + '</span><span class="agent-card-model">' + a.model + '</span></div>' +
+                    '<div class="agent-card-footer">' +
+                        '<div class="agent-card-stats">' +
+                            '<div class="agent-card-stat">已选择技能：<strong style="color:var(--red)">' + a.skills + '</strong></div>' +
+                            '<div class="agent-card-stat">已选择知识库：<strong style="color:var(--blue)">' + a.knowledge + '</strong></div>' +
+                        '</div>' +
+                        '<div style="display:flex;gap:4px;align-items:center">' +
+                            '<button class="' + toggleClass + '" style="font-size:11px;padding:4px 10px;border:1px solid var(--gray2);border-radius:6px" onclick="event.stopPropagation();toggleAgentStatus(' + a.id + ')">' + toggleLabel + '</button>' +
+                            '<div class="agent-card-arrow">›</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
+
+            const totalPages = Math.ceil(filtered.length / agentPageSize);
+            if (totalPages > 1) {
+                let pagHtml = '<div class="page-btn" onclick="agentGoPage(' + (agentCurrentPage - 1) + ')">‹</div>';
+                for (let i = 1; i <= totalPages; i++) {
+                    pagHtml += '<div class="page-btn' + (i === agentCurrentPage ? ' active' : '') + '" onclick="agentGoPage(' + i + ')">' + i + '</div>';
+                }
+                pagHtml += '<div class="page-btn" onclick="agentGoPage(' + (agentCurrentPage + 1) + ')">›</div>';
+                pagination.innerHTML = pagHtml;
+            } else {
+                pagination.innerHTML = '';
+            }
+            updateBatchBtn();
+        }
+
+        function getFilteredAgents() {
+            const search = document.getElementById('agentSearchInput').value.toLowerCase();
+            const type = document.getElementById('agentTypeFilter').value;
+            const status = document.getElementById('agentStatusFilter').value;
+            const time = document.getElementById('agentTimeFilter').value;
+            return agentData.filter(a => {
+                if (search && !a.name.toLowerCase().includes(search)) return false;
+                if (type && a.type !== type) return false;
+                if (status && a.status !== status) return false;
+                if (time) {
+                    const days = parseInt(time);
+                    const agentDate = new Date(a.time);
+                    const now = new Date();
+                    const diff = (now - agentDate) / (1000 * 60 * 60 * 24);
+                    if (diff > days) return false;
+                }
+                return true;
+            });
+        }
+
+        function truncateText(text, maxLen) {
+            return text.length > maxLen ? text.substring(0, maxLen) + '…' : text;
+        }
+
+        function getTypeTagClass(type) {
+            const map = { '培训': 'red', '客服': 'green', '运营': 'blue', '销售': 'blue' };
+            return map[type] || 'blue';
+        }
+
+        function agentCardClick(e, id, name) {
+            if (e.target.closest('.agent-card-select')) return;
+            openWorkspace(name);
+        }
+
+        function toggleAgentSelect(id) {
+            const idx = selectedAgents.indexOf(id);
+            if (idx === -1) selectedAgents.push(id);
+            else selectedAgents.splice(idx, 1);
+            renderAgentCards();
+        }
+
+        function updateBatchBtn() {
+            const btn = document.getElementById('agentBatchBtn');
+            btn.style.display = selectedAgents.length > 0 ? '' : 'none';
+        }
+
+        function agentBatchAction(action) {
+            if (selectedAgents.length === 0) return;
+            confirmDelete(selectedAgents.length + ' 个Agent');
+        }
+
+        function toggleAgentStatus(id) {
+            const agent = agentData.find(a => a.id === id);
+            if (!agent) return;
+            agent.status = agent.status === 'on' ? 'off' : 'on';
+            renderAgentCards();
+            showToast('已' + (agent.status === 'on' ? '启用' : '停用') + '「' + agent.name + '」');
+        }
+
+        function filterAgentCards() {
+            agentCurrentPage = 1;
+            renderAgentCards();
+        }
+
+        function agentGoPage(page) {
+            const filtered = getFilteredAgents();
+            const totalPages = Math.ceil(filtered.length / agentPageSize);
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            agentCurrentPage = page;
+            renderAgentCards();
+        }
+
+        function switchAgentView(view) {
+            document.getElementById('agentGridView').classList.toggle('active', view === 'grid');
+            document.getElementById('agentListView').classList.toggle('active', view === 'list');
+        }
+
+        renderAgentCards();
+
+        function switchRightTab(tab, panelId) {
+            tab.parentElement.querySelectorAll('.col-tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById('promptPanel').style.display = panelId === 'promptPanel' ? 'flex' : 'none';
+            document.getElementById('skillPromptPanel').style.display = panelId === 'skillPromptPanel' ? 'flex' : 'none';
+        }
+
+        function sendDebug() {
+            const input = document.getElementById('debugInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            const messages = document.getElementById('debugMessages');
+            const welcome = document.getElementById('debugWelcome');
+            if (welcome) welcome.remove();
+            messages.innerHTML += '<div class="debug-msg user"><div class="debug-avatar">ME</div><div class="debug-bubble">' + msg + '</div></div>';
+            input.value = '';
+            setTimeout(() => { messages.innerHTML += '<div class="debug-msg ai"><div class="debug-avatar">AI</div><div class="debug-bubble">为你找到 3 门适合"' + msg + '"的精品课程，你可以左右滑动查看哦～</div></div>'; messages.scrollTop = messages.scrollHeight; }, 800);
+            messages.scrollTop = messages.scrollHeight;
+        }
+        function clearDebug() {
+            document.getElementById('debugMessages').innerHTML = '<div class="debug-welcome" id="debugWelcome"><div class="debug-welcome-icon">AI</div><h3 id="welcomeTitle">' + document.getElementById('initTitle').value + '</h3><p id="welcomeContent">' + document.getElementById('initContent').value + '</p></div>';
+        }
+        function updateWelcome() {
+            const t = document.getElementById('welcomeTitle'), c = document.getElementById('welcomeContent');
+            if (t) t.textContent = document.getElementById('initTitle').value;
+            if (c) c.textContent = document.getElementById('initContent').value;
+        }
+
+        function addQuickQ() {
+            const list = document.getElementById('quickQList');
+            if (list.querySelectorAll('.quick-q-row').length >= 5) { showToast('最多5条推荐问题！'); return; }
+            const div = document.createElement('div');
+            div.className = 'quick-q-row';
+            div.innerHTML = '<input class="form-input" placeholder="请输入"><button class="btn-ghost danger" style="font-size:11px" onclick="this.parentElement.remove()">删除</button>';
+            list.appendChild(div);
+        }
+        function addModalQuickQ() {
+            const list = document.getElementById('modalQuickQList');
+            if (list.querySelectorAll('.quick-q-row').length >= 5) { showToast('最多5条推荐问题！'); return; }
+            const div = document.createElement('div');
+            div.className = 'quick-q-row';
+            div.innerHTML = '<input class="form-input" placeholder="请输入"><button class="btn-ghost danger" style="font-size:11px" onclick="this.parentElement.remove()">删除</button>';
+            list.appendChild(div);
+        }
+
+        function insertVar(varName) {
+            const ta = document.getElementById('promptText');
+            ta.focus();
+            const s = ta.selectionStart;
+            const e = ta.selectionEnd;
+            const insertText = '${' + varName + '}';
+            ta.value = ta.value.substring(0, s) + insertText + ta.value.substring(e);
+            ta.setSelectionRange(s + insertText.length, s + insertText.length);
+            ta.focus();
+            document.getElementById('charCount').textContent = ta.value.length + ' 字符';
+            closeVarPanel();
+            showToast('已插入变量 ${' + varName + '}');
+        }
+
+        const systemVars = [
+            { name: 'user_id', desc: '当前用户唯一标识', source: 'system' },
+            { name: 'org_id', desc: '用户所属组织唯一标识', source: 'system' },
+            { name: 'current_time', desc: '当前系统时间（ISO 8601）', source: 'system' },
+            { name: 'request_ip', desc: '请求来源IP地址', source: 'system' },
+            { name: 'tenant_name', desc: '租户名称', source: 'system' },
+        ];
+        const businessVars = [
+            { name: 'skill_name', desc: '当前Agent绑定的技能名称', source: 'business' },
+            { name: 'input_params', desc: '技能输入参数集合', source: 'business' },
+            { name: 'output_schema', desc: '技能输出数据结构定义', source: 'business' },
+        ];
+        let customVars = JSON.parse(localStorage.getItem('customVars') || '[{"name":"order_status","desc":"订单状态","source":"custom"},{"name":"course_id","desc":"课程ID","source":"custom"}]');
+
+        function getAllVars() { return [...systemVars, ...businessVars, ...customVars]; }
+
+        function renderVarPanel(filter) {
+            const body = document.getElementById('varPanelBody');
+            const q = (filter || '').toLowerCase();
+            let html = '';
+
+            const filteredSystem = systemVars.filter(v => !q || v.name.toLowerCase().includes(q) || v.desc.toLowerCase().includes(q));
+            const filteredBusiness = businessVars.filter(v => !q || v.name.toLowerCase().includes(q) || v.desc.toLowerCase().includes(q));
+            const filteredCustom = customVars.filter(v => !q || v.name.toLowerCase().includes(q) || v.desc.toLowerCase().includes(q));
+
+            if (filteredSystem.length) {
+                html += '<div class="var-group-title"><span class="var-group-badge system">系统</span>系统全局变量</div>';
+                filteredSystem.forEach(v => { html += '<div class="var-item" onclick="insertVar(\'' + v.name + '\')" title="${' + v.name + '} - ' + v.desc + '"><span class="var-item-code">${' + v.name + '}</span><span class="var-item-desc">' + v.desc + '</span><span class="var-item-source system">系统</span></div>'; });
+            }
+            if (filteredBusiness.length) {
+                html += '<div class="var-group-title"><span class="var-group-badge business">业务</span>业务字段变量</div>';
+                filteredBusiness.forEach(v => { html += '<div class="var-item" onclick="insertVar(\'' + v.name + '\')" title="${' + v.name + '} - ' + v.desc + '"><span class="var-item-code">${' + v.name + '}</span><span class="var-item-desc">' + v.desc + '</span><span class="var-item-source business">业务</span></div>'; });
+            }
+            if (filteredCustom.length) {
+                html += '<div class="var-group-title"><span class="var-group-badge custom">自定义</span>自定义变量</div>';
+                filteredCustom.forEach((v, i) => { html += '<div class="var-item" onclick="insertVar(\'' + v.name + '\')" title="${' + v.name + '} - ' + v.desc + '"><span class="var-item-code">${' + v.name + '}</span><span class="var-item-desc">' + v.desc + '</span><span class="var-item-source custom">自定义</span><button class="var-item-delete" onclick="event.stopPropagation();deleteCustomVar(' + i + ')" title="删除">✕</button></div>'; });
+            }
+            if (!filteredSystem.length && !filteredBusiness.length && !filteredCustom.length) {
+                html = '<div style="padding:24px;text-align:center;color:var(--gray3);font-size:13px;font-weight:500">未找到匹配变量</div>';
+            }
+            body.innerHTML = html;
+        }
+
+        function toggleVarPanel() {
+            const panel = document.getElementById('varPanel');
+            if (panel.classList.contains('show')) { closeVarPanel(); }
+            else { panel.classList.add('show'); renderVarPanel(); document.getElementById('varSearchInput').value = ''; document.getElementById('varSearchInput').focus(); }
+        }
+        function closeVarPanel() { document.getElementById('varPanel').classList.remove('show'); }
+        function filterVars(q) { renderVarPanel(q); }
+
+        function addCustomVar() {
+            const nameInput = document.getElementById('varAddName');
+            const descInput = document.getElementById('varAddDesc');
+            const name = nameInput.value.trim().replace(/^\$\{|\}$/g, '');
+            const desc = descInput.value.trim() || '自定义变量';
+            if (!name) { showToast('请输入变量名！'); return; }
+            if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) { showToast('变量名仅支持英文、数字、下划线，且以字母或下划线开头！'); return; }
+            if (getAllVars().some(v => v.name === name)) { showToast('变量名已存在！'); return; }
+            customVars.push({ name, desc, source: 'custom' });
+            localStorage.setItem('customVars', JSON.stringify(customVars));
+            nameInput.value = '';
+            descInput.value = '';
+            renderVarPanel(document.getElementById('varSearchInput').value);
+            showToast('自定义变量 ${' + name + '} 添加成功！');
+        }
+
+        function deleteCustomVar(index) {
+            const name = customVars[index].name;
+            customVars.splice(index, 1);
+            localStorage.setItem('customVars', JSON.stringify(customVars));
+            renderVarPanel(document.getElementById('varSearchInput').value);
+            showToast('已删除变量 ${' + name + '}');
+        }
+
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('varPanel');
+            const btn = document.getElementById('varPanelBtn');
+            if (panel && panel.classList.contains('show') && !panel.contains(e.target) && !btn.contains(e.target)) { closeVarPanel(); }
+            const pPanel = document.getElementById('promptVarPanel');
+            const pBtn = document.getElementById('promptVarPanelBtn');
+            if (pPanel && pPanel.classList.contains('show') && !pPanel.contains(e.target) && !pBtn && !pBtn.contains(e.target)) { closePromptVarPanel(); }
+        });
+
+        // ===== 提示词配置弹窗 - 插入变量 =====
+        function insertPromptVar(varName) {
+            const ta = document.getElementById('promptModalText');
+            ta.focus();
+            const s = ta.selectionStart;
+            const e = ta.selectionEnd;
+            const insertText = '${' + varName + '}';
+            ta.value = ta.value.substring(0, s) + insertText + ta.value.substring(e);
+            ta.setSelectionRange(s + insertText.length, s + insertText.length);
+            ta.focus();
+            closePromptVarPanel();
+            showToast('已插入变量 ${' + varName + '}');
+        }
+
+        function renderPromptVarPanel(filter) {
+            const body = document.getElementById('promptVarPanelBody');
+            const q = (filter || '').toLowerCase();
+            let html = '';
+            const filteredSystem = systemVars.filter(v => !q || v.name.toLowerCase().includes(q) || v.desc.toLowerCase().includes(q));
+            const filteredBusiness = businessVars.filter(v => !q || v.name.toLowerCase().includes(q) || v.desc.toLowerCase().includes(q));
+            const filteredCustom = customVars.filter(v => !q || v.name.toLowerCase().includes(q) || v.desc.toLowerCase().includes(q));
+            if (filteredSystem.length) {
+                html += '<div class="var-group-title"><span class="var-group-badge system">系统</span>系统全局变量</div>';
+                filteredSystem.forEach(v => { html += '<div class="var-item" onclick="insertPromptVar(\'' + v.name + '\')"><span class="var-item-code">${' + v.name + '}</span><span class="var-item-desc">' + v.desc + '</span><span class="var-item-source system">系统</span></div>'; });
+            }
+            if (filteredBusiness.length) {
+                html += '<div class="var-group-title"><span class="var-group-badge business">业务</span>业务字段变量</div>';
+                filteredBusiness.forEach(v => { html += '<div class="var-item" onclick="insertPromptVar(\'' + v.name + '\')"><span class="var-item-code">${' + v.name + '}</span><span class="var-item-desc">' + v.desc + '</span><span class="var-item-source business">业务</span></div>'; });
+            }
+            if (filteredCustom.length) {
+                html += '<div class="var-group-title"><span class="var-group-badge custom">自定义</span>自定义变量</div>';
+                filteredCustom.forEach((v, i) => { html += '<div class="var-item" onclick="insertPromptVar(\'' + v.name + '\')"><span class="var-item-code">${' + v.name + '}</span><span class="var-item-desc">' + v.desc + '</span><span class="var-item-source custom">自定义</span><button class="var-item-delete" onclick="event.stopPropagation();deleteCustomVar(' + i + ');renderPromptVarPanel(document.getElementById(\'promptVarSearchInput\').value)">✕</button></div>'; });
+            }
+            if (!filteredSystem.length && !filteredBusiness.length && !filteredCustom.length) {
+                html = '<div style="padding:24px;text-align:center;color:var(--gray3);font-size:13px;font-weight:500">未找到匹配变量</div>';
+            }
+            body.innerHTML = html;
+        }
+
+        function togglePromptVarPanel() {
+            const panel = document.getElementById('promptVarPanel');
+            if (panel.classList.contains('show')) { closePromptVarPanel(); }
+            else { panel.classList.add('show'); renderPromptVarPanel(); document.getElementById('promptVarSearchInput').value = ''; document.getElementById('promptVarSearchInput').focus(); }
+        }
+        function closePromptVarPanel() { document.getElementById('promptVarPanel').classList.remove('show'); }
+        function filterPromptVars(q) { renderPromptVarPanel(q); }
+
+        function addPromptCustomVar() {
+            const nameInput = document.getElementById('promptVarAddName');
+            const descInput = document.getElementById('promptVarAddDesc');
+            const name = nameInput.value.trim().replace(/^\$\{|\}$/g, '');
+            const desc = descInput.value.trim() || '自定义变量';
+            if (!name) { showToast('请输入变量名！'); return; }
+            if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) { showToast('变量名仅支持英文、数字、下划线！'); return; }
+            if (getAllVars().some(v => v.name === name)) { showToast('变量名已存在！'); return; }
+            customVars.push({ name, desc, source: 'custom' });
+            localStorage.setItem('customVars', JSON.stringify(customVars));
+            nameInput.value = '';
+            descInput.value = '';
+            renderPromptVarPanel(document.getElementById('promptVarSearchInput').value);
+            showToast('自定义变量 ${' + name + '} 添加成功！');
+        }
+
+        function toggleMcpType(val) {
+            ['mcpWorkflow','mcpApi','mcpObject','mcpPrompt','mcpKnowledge'].forEach(id => document.getElementById(id).style.display = 'none');
+            const map = { workflow:'mcpWorkflow', api:'mcpApi', object:'mcpObject', prompt:'mcpPrompt', knowledge:'mcpKnowledge' };
+            if (map[val]) document.getElementById(map[val]).style.display = 'block';
+        }
+
+        const pt = document.getElementById('promptText');
+        if (pt) pt.addEventListener('input', () => { document.getElementById('charCount').textContent = pt.value.length + ' 字符'; });
+
+        document.querySelectorAll('.knowledge-file').forEach(f => {
+            f.addEventListener('click', () => {
+                f.classList.toggle('selected');
+                const c = f.querySelector('.file-check');
+                if (f.classList.contains('selected')) { if (!c) { const s = document.createElement('span'); s.className = 'file-check'; s.textContent = '✓'; f.appendChild(s); } }
+                else { if (c) c.remove(); }
+            });
+        });
+        document.querySelectorAll('.skill-card').forEach(c => {
+            c.addEventListener('click', () => {
+                c.classList.toggle('selected');
+                const ch = c.querySelector('.skill-check');
+                if (c.classList.contains('selected')) { if (!ch) { const s = document.createElement('span'); s.className = 'skill-check'; s.textContent = '✓'; c.appendChild(s); } }
+                else { if (ch) ch.remove(); }
+            });
+        });
+
+        // Agent创建弹窗逻辑
+        let agentCreateStep = 1;
+        let selectedTemplate = 'blank';
+        function resetAgentCreate() {
+            agentCreateStep = 1;
+            selectedTemplate = 'blank';
+            document.getElementById('agentStep1').style.display = '';
+            document.getElementById('agentStep2').style.display = 'none';
+            document.getElementById('agentStep1Next').style.display = '';
+            document.getElementById('agentStep2Create').style.display = 'none';
+            document.getElementById('agentStep1Back').style.display = 'none';
+            updateStepDots('stepIndicator', 1, 2);
+            document.querySelectorAll('#agentCreateModal .template-card').forEach((c,i) => c.classList.toggle('selected', i===0));
+            document.getElementById('existingAgentList').style.display = 'none';
+        }
+        function selectTemplate(el, type) {
+            document.querySelectorAll('#agentCreateModal .template-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedTemplate = type;
+            document.getElementById('existingAgentList').style.display = type === 'existing' ? 'block' : 'none';
+        }
+        function selectAgentItem(el) {
+            el.parentElement.querySelectorAll('.agent-list-item').forEach(i => i.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+        function agentGoStep(step) {
+            agentCreateStep = step;
+            document.getElementById('agentStep1').style.display = step === 1 ? '' : 'none';
+            document.getElementById('agentStep2').style.display = step === 2 ? '' : 'none';
+            document.getElementById('agentStep1Next').style.display = step === 1 ? '' : 'none';
+            document.getElementById('agentStep2Create').style.display = step === 2 ? '' : 'none';
+            document.getElementById('agentStep1Back').style.display = step === 2 ? '' : 'none';
+            updateStepDots('stepIndicator', step, 2);
+        }
+        function switchAgentTab(btn, idx) {
+            document.querySelectorAll('#agentConfigTabs .tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            for (let i = 0; i < 5; i++) document.getElementById('agentTab' + i).classList.toggle('active', i === idx);
+        }
+
+        // Skill创建弹窗逻辑
+        let skillStep = 1;
+        function resetSkillModal() {
+            skillStep = 1;
+            document.getElementById('skillStep1').style.display = '';
+            document.getElementById('skillStep2').style.display = 'none';
+            document.getElementById('skillStep3').style.display = 'none';
+            document.getElementById('skillPrevBtn').style.display = 'none';
+            document.getElementById('skillNextBtn').style.display = '';
+            document.getElementById('skillCreateBtn').style.display = 'none';
+            updateStepDots('skillStepIndicator', 1, 3);
+        }
+        function skillGoStep(dir) {
+            skillStep += dir;
+            document.getElementById('skillStep1').style.display = skillStep === 1 ? '' : 'none';
+            document.getElementById('skillStep2').style.display = skillStep === 2 ? '' : 'none';
+            document.getElementById('skillStep3').style.display = skillStep === 3 ? '' : 'none';
+            document.getElementById('skillPrevBtn').style.display = skillStep > 1 ? '' : 'none';
+            document.getElementById('skillNextBtn').style.display = skillStep < 3 ? '' : 'none';
+            document.getElementById('skillCreateBtn').style.display = skillStep === 3 ? '' : 'none';
+            updateStepDots('skillStepIndicator', skillStep, 3);
+        }
+
+        function resetMcpModal() {
+            ['mcpWorkflow','mcpApi','mcpObject','mcpPrompt','mcpKnowledge'].forEach(id => document.getElementById(id).style.display = 'none');
+            document.querySelectorAll('input[name="mcpObj"]').forEach(cb => { cb.checked = false; });
+            updateObjSelected();
+        }
+
+        // ===== MCP操作对象选择 =====
+        document.addEventListener('change', function(e) {
+            if (e.target.name === 'mcpObj') updateObjSelected();
+        });
+
+        function updateObjSelected() {
+            const checked = document.querySelectorAll('input[name="mcpObj"]:checked');
+            const bar = document.getElementById('objSelectedBar');
+            const tags = document.getElementById('objSelectedTags');
+            if (checked.length === 0) { bar.style.display = 'none'; return; }
+            bar.style.display = 'flex';
+            tags.innerHTML = Array.from(checked).map(cb => {
+                const val = cb.value;
+                return '<span class="obj-selected-tag">' + val + '<span class="remove" onclick="uncheckObj(\'' + val + '\')">✕</span></span>';
+            }).join('');
+        }
+
+        function uncheckObj(val) {
+            const cb = document.querySelector('input[name="mcpObj"][value="' + val + '"]');
+            if (cb) { cb.checked = false; updateObjSelected(); }
+        }
+
+        function updateStepDots(containerId, current, total) {
+            const dots = document.getElementById(containerId).querySelectorAll('.step-dot');
+            dots.forEach((d, i) => { d.className = 'step-dot'; if (i < current - 1) d.classList.add('done'); if (i === current - 1) d.classList.add('active'); });
+        }
+
+        // ===== 知识库配置页面逻辑 =====
+        let kbCurrentFolder = '全部文件';
+        let kbFolderAction = 'new';
+        let kbFolderTarget = '';
+        let kbMoveTarget = '';
+        let kbSearchHistory = JSON.parse(localStorage.getItem('kbSearchHistory') || '[]');
+        const kbAllFiles = [
+            { name: '产品需求文档v3.2.pdf', type: 'PDF', size: '2.4MB', time: '2024-09-15', path: '产品文档库/需求文档', icon: '📄' },
+            { name: 'API接口说明.docx', type: 'DOCX', size: '1.8MB', time: '2024-09-14', path: '产品文档库/设计文档', icon: '📄' },
+            { name: '新员工培训手册.pdf', type: 'PDF', size: '5.2MB', time: '2024-09-12', path: '培训资料/新员工培训', icon: '📄' },
+            { name: '课程评分数据.xlsx', type: 'XLSX', size: '890KB', time: '2024-09-10', path: '课程数据', icon: '📊' },
+            { name: '部署指南.md', type: 'MD', size: '45KB', time: '2024-09-09', path: '产品文档库', icon: '📝' },
+            { name: '产品首页截图.png', type: 'PNG', size: '3.1MB', time: '2024-09-08', path: '产品截图', icon: '🖼' },
+            { name: '系统架构设计.pdf', type: 'PDF', size: '4.7MB', time: '2024-09-07', path: '产品文档库/设计文档', icon: '📄' },
+            { name: '开发规范.txt', type: 'TXT', size: '12KB', time: '2024-09-06', path: '产品文档库', icon: '📝' },
+            { name: '用户权限API.md', type: 'MD', size: '32KB', time: '2024-09-05', path: '接口文档/内部API', icon: '📝' },
+            { name: '支付接口文档.pdf', type: 'PDF', size: '1.2MB', time: '2024-09-04', path: '接口文档/第三方API', icon: '📄' },
+            { name: '技能提升课程表.xlsx', type: 'XLSX', size: '560KB', time: '2024-09-03', path: '培训资料/技能提升', icon: '📊' },
+            { name: '课程搜索API.docx', type: 'DOCX', size: '890KB', time: '2024-09-02', path: '接口文档/内部API', icon: '📄' },
+        ];
+
+        function selectKbFolder(el, folder) {
+            document.querySelectorAll('.kb-tree-row').forEach(r => r.classList.remove('active'));
+            el.classList.add('active');
+            kbCurrentFolder = folder;
+            const arrow = el.querySelector('.kb-tree-arrow');
+            if (arrow && !arrow.classList.contains('hidden')) {
+                arrow.classList.toggle('expanded');
+                const children = el.parentElement.querySelector('.kb-tree-children');
+                if (children) children.classList.toggle('collapsed');
+            }
+            updateKbBreadcrumb(folder);
+            renderKbFiles(folder);
+            document.getElementById('kbSearchInput').value = '';
+            document.getElementById('kbSearchResults').classList.remove('show');
+            document.getElementById('kbFileView').style.display = '';
+            document.getElementById('kbUploadZone').style.display = '';
+        }
+
+        function updateKbBreadcrumb(folder) {
+            const bc = document.getElementById('kbBreadcrumb');
+            const parts = folder === '全部文件' ? ['全部文件'] : folder.split('/');
+            let html = '';
+            parts.forEach((p, i) => {
+                if (i > 0) html += '<span class="sep">/</span>';
+                if (i === parts.length - 1) html += '<span class="current">' + p + '</span>';
+                else html += '<span onclick="selectKbFolder(document.querySelector(\'.kb-tree-row[data-path=\"' + parts.slice(0,i+1).join('/') + '\"]\'),\'' + parts.slice(0,i+1).join('/') + '\')">' + p + '</span>';
+            });
+            if (folder === '全部文件') html = '<span class="current">全部文件</span>';
+            bc.innerHTML = html;
+        }
+
+        function renderKbFiles(folder) {
+            const grid = document.getElementById('kbFileGrid');
+            const filtered = folder === '全部文件' ? kbAllFiles : kbAllFiles.filter(f => f.path === folder || f.path.startsWith(folder + '/'));
+            document.getElementById('kbFileCount').textContent = filtered.length + ' 个文件';
+            grid.innerHTML = filtered.map(f => '<div class="kb-file-card" onclick="toggleKbFileSelect(this)"><div class="kb-file-card-check">✓</div><div class="kb-file-card-icon">' + f.icon + '</div><div class="kb-file-card-name">' + f.name + '</div><div class="kb-file-card-meta">' + f.type + ' · ' + f.size + ' · ' + f.time + '</div></div>').join('');
+        }
+
+        function toggleKbFileSelect(card) {
+            card.classList.toggle('selected');
+        }
+
+        function kbBatchDelete() {
+            const selected = document.querySelectorAll('.kb-file-card.selected');
+            if (selected.length === 0) { showToast('请先选择文件！'); return; }
+            confirmDelete(selected.length + ' 个文件');
+        }
+
+        // 文件夹操作弹窗
+        function showKbFolderDialog(action, target) {
+            kbFolderAction = action;
+            kbFolderTarget = target || '';
+            const dialog = document.getElementById('kbFolderDialog');
+            const title = document.getElementById('kbFolderDialogTitle');
+            const input = document.getElementById('kbFolderNameInput');
+            const hint = document.getElementById('kbFolderHint');
+            if (action === 'new') {
+                title.innerHTML = '新建<span>文件夹</span>';
+                input.value = '';
+                hint.textContent = '将在「' + (target || '根目录') + '」下创建子文件夹';
+            } else {
+                title.innerHTML = '重命名<span>文件夹</span>';
+                input.value = target;
+                hint.textContent = '名称仅支持中文、英文、数字、下划线，不可包含特殊字符';
+            }
+            dialog.classList.add('show');
+            input.focus();
+        }
+        function hideKbFolderDialog() { document.getElementById('kbFolderDialog').classList.remove('show'); }
+        function confirmKbFolderAction() {
+            const name = document.getElementById('kbFolderNameInput').value.trim();
+            if (!name) { showToast('请输入文件夹名称！'); return; }
+            if (/[\\/:*?"<>|]/.test(name)) { showToast('名称包含非法字符！'); return; }
+            hideKbFolderDialog();
+            showToast(kbFolderAction === 'new' ? '文件夹创建成功！' : '重命名成功！');
+        }
+
+        // 移动弹窗
+        function showKbMoveDialog(target) {
+            kbFolderTarget = target;
+            document.getElementById('kbMoveDialog').classList.add('show');
+        }
+        function hideKbMoveDialog() { document.getElementById('kbMoveDialog').classList.remove('show'); }
+        function selectMoveTarget(el, target) {
+            document.querySelectorAll('#kbMoveTree .kb-tree-row').forEach(r => r.classList.remove('active'));
+            el.classList.add('active');
+            kbMoveTarget = target;
+        }
+        function confirmKbMove() {
+            if (!kbMoveTarget) { showToast('请选择目标文件夹！'); return; }
+            hideKbMoveDialog();
+            showToast('已移动到「' + kbMoveTarget + '」！');
+        }
+
+        // 搜索功能
+        function kbSearch(query) {
+            const results = document.getElementById('kbSearchResults');
+            const fileView = document.getElementById('kbFileView');
+            const uploadZone = document.getElementById('kbUploadZone');
+            if (!query.trim()) {
+                results.classList.remove('show');
+                fileView.style.display = '';
+                uploadZone.style.display = '';
+                return;
+            }
+            const q = query.toLowerCase();
+            const matched = kbAllFiles.filter(f => f.name.toLowerCase().includes(q) || f.type.toLowerCase().includes(q) || f.path.toLowerCase().includes(q));
+            results.classList.add('show');
+            fileView.style.display = 'none';
+            uploadZone.style.display = 'none';
+            const sort = document.getElementById('kbSearchSort').value;
+            if (sort === 'time') matched.sort((a, b) => b.time.localeCompare(a.time));
+            else if (sort === 'name') matched.sort((a, b) => a.name.localeCompare(b.name));
+            results.innerHTML = matched.length === 0
+                ? '<div class="kb-empty"><div class="kb-empty-icon">🔍</div><div class="kb-empty-text">未找到匹配文件</div><div class="kb-empty-hint">试试其他关键词</div></div>'
+                : matched.map(f => {
+                    const highlighted = f.name.replace(new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>');
+                    return '<div class="kb-search-result-item"><div class="kb-search-result-icon">' + f.icon + '</div><div class="kb-search-result-info"><div class="kb-search-result-name">' + highlighted + '</div><div class="kb-search-result-path">📁 ' + f.path + '</div></div><div class="kb-search-result-meta"><span>' + f.type + '</span><span>' + f.size + '</span><span>' + f.time + '</span></div></div>';
+                }).join('');
+            if (kbSearchHistory.indexOf(query) === -1) {
+                kbSearchHistory.unshift(query);
+                if (kbSearchHistory.length > 10) kbSearchHistory.pop();
+                localStorage.setItem('kbSearchHistory', JSON.stringify(kbSearchHistory));
+            }
+        }
+
+        function showKbHistory() {
+            const list = document.getElementById('kbHistoryList');
+            if (kbSearchHistory.length === 0) { list.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:var(--gray3)">暂无搜索历史</div>'; }
+            else { list.innerHTML = kbSearchHistory.map(h => '<div class="kb-search-history-item" onmousedown="document.getElementById(\'kbSearchInput\').value=\'' + h.replace(/'/g, "\\'") + '\';kbSearch(\'' + h.replace(/'/g, "\\'") + '\')">🔍 ' + h + '</div>').join(''); }
+            document.getElementById('kbSearchHistory').classList.add('show');
+        }
+        function hideKbHistory() { document.getElementById('kbSearchHistory').classList.remove('show'); }
+        function clearKbHistory() { kbSearchHistory = []; localStorage.removeItem('kbSearchHistory'); document.getElementById('kbHistoryList').innerHTML = '<div style="padding:10px 14px;font-size:12px;color:var(--gray3)">暂无搜索历史</div>'; }
+
+        // 文件上传
+        const allowedFormats = ['pdf', 'docx', 'md', 'txt', 'xlsx', 'png', 'jpg'];
+        const maxSize = 10 * 1024 * 1024;
+
+        function handleKbUpload(files) { processKbUpload(files, 'kbUploadList'); }
+        function handleKbModalUpload(files) { processKbUpload(files, 'kbModalUploadList'); }
+
+        function processKbUpload(files, listId) {
+            const list = document.getElementById(listId);
+            list.style.display = 'block';
+            Array.from(files).forEach(file => {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (allowedFormats.indexOf(ext) === -1) {
+                    list.innerHTML += '<div class="kb-upload-item"><div class="kb-upload-item-icon">⚠️</div><div class="kb-upload-item-info"><div class="kb-upload-item-name">' + file.name + '</div><div class="kb-upload-item-size">不支持的格式（.' + ext + '）</div></div><span class="kb-upload-status error">格式错误</span></div>';
+                    return;
+                }
+                if (file.size > maxSize) {
+                    list.innerHTML += '<div class="kb-upload-item"><div class="kb-upload-item-icon">⚠️</div><div class="kb-upload-item-info"><div class="kb-upload-item-name">' + file.name + '</div><div class="kb-upload-item-size">超过10MB限制</div></div><span class="kb-upload-status error">超出大小</span></div>';
+                    return;
+                }
+                const itemId = 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                const iconMap = { pdf: '📄', docx: '📄', md: '📝', txt: '📝', xlsx: '📊', png: '🖼', jpg: '🖼' };
+                list.innerHTML += '<div class="kb-upload-item" id="' + itemId + '"><div class="kb-upload-item-icon">' + (iconMap[ext] || '📄') + '</div><div class="kb-upload-item-info"><div class="kb-upload-item-name">' + file.name + '</div><div class="kb-upload-item-size">' + formatFileSize(file.size) + '</div><div class="kb-upload-progress"><div class="kb-upload-progress-bar" id="' + itemId + '_bar" style="width:0%"></div></div></div><span class="kb-upload-status uploading" id="' + itemId + '_status">上传中</span><div class="kb-upload-actions"><button onclick="pauseKbUpload(\'' + itemId + '\')">⏸</button><button onclick="cancelKbUpload(\'' + itemId + '\')">✕</button></div></div>';
+                simulateUpload(itemId);
+            });
+        }
+
+        function simulateUpload(itemId) {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 20 + 5;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    const bar = document.getElementById(itemId + '_bar');
+                    const status = document.getElementById(itemId + '_status');
+                    if (bar) bar.style.width = '100%';
+                    if (status) { status.className = 'kb-upload-status success'; status.textContent = '完成'; }
+                } else {
+                    const bar = document.getElementById(itemId + '_bar');
+                    if (bar) bar.style.width = progress + '%';
+                }
+            }, 300);
+            window['uploadInterval_' + itemId] = interval;
+        }
+
+        function pauseKbUpload(itemId) {
+            const interval = window['uploadInterval_' + itemId];
+            if (interval) { clearInterval(interval); const status = document.getElementById(itemId + '_status'); if (status) { status.className = 'kb-upload-status waiting'; status.textContent = '已暂停'; } }
+        }
+
+        function cancelKbUpload(itemId) {
+            const interval = window['uploadInterval_' + itemId];
+            if (interval) clearInterval(interval);
+            const el = document.getElementById(itemId);
+            if (el) el.remove();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + 'B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + 'KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + 'MB';
+        }
+
+        // 拖拽上传
+        const uploadZone = document.getElementById('kbUploadZone');
+        if (uploadZone) {
+            uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+            uploadZone.addEventListener('dragleave', () => { uploadZone.classList.remove('dragover'); });
+            uploadZone.addEventListener('drop', (e) => { e.preventDefault(); uploadZone.classList.remove('dragover'); handleKbUpload(e.dataTransfer.files); });
+        }
+    </script>
+</body>
+</html>
